@@ -1,0 +1,17 @@
+{
+  "name": "ipqc-backend",
+  "version": "1.0.0",
+  "description": "IPQC Tracker backend - reads/writes an Excel file as the data store (no database).",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "import": "node import-existing-data.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "exceljs": "^4.4.0",
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1"
+  }
+}

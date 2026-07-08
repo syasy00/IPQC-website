@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>IPQC Tracker</title>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<!-- Tailwind (Play CDN — no build step required) -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          'bg-main': '#f8fafc',
+          'sidebar-bg': '#0f172a',
+          'sidebar-active': '#1e293b',
+          'brand-orange': '#F15D22',
+          'text-main': '#1e293b',
+          'text-muted': '#64748b',
+          'border-subtle': '#e2e8f0',
+        },
+        fontFamily: {
+          sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        }
+      }
+    }
+  }
+</script>
+
+<!-- Icons -->
+<script src="https://unpkg.com/lucide@latest"></script>
+<!-- Charts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+
+<link rel="stylesheet" href="style.css" />
+</head>
+<body class="bg-bg-main text-text-main antialiased font-sans">
+
+  <div id="app" class="flex h-screen w-screen overflow-hidden"></div>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-6 right-6 z-[100] hidden"></div>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

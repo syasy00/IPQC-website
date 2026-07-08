@@ -1,0 +1,257 @@
+/**
+ * IPQC Tracker backend
+ * ---------------------------------------------------------
+ * No database. The Excel file at DATA_DIR/ipqc-tracker.xlsx IS the
+ * data store. The frontend reads/writes through this API, and
+ * Power BI can point straight at GET /api/download (or the raw
+ * file if you mount a persistent disk) to pick up both the
+ * historical rows you seed once and every new submission.
+ * ---------------------------------------------------------
+ */
+const path = require('path');
+const fs = require('fs');
+const express = require('express');
+const cors = require('cors');
+const multer = require('multer');
+const ExcelJS = require('exceljs');
+
+const app = express();
+const PORT = process.env.PORT || 4000;
+
+// On Render, mount a persistent disk and set DATA_DIR to its path
+// (e.g. /var/data) so the Excel file survives restarts/redeploys.
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
+const DATA_FILE = path.join(DATA_DIR, 'ipqc-tracker.xlsx');
+const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
+const SHEET_NAME = 'IPQC Tracker';
+
+const COLUMNS = [
+  { header: 'ID', key: 'id', width: 10 },
+  { header: 'No', key: 'no', width: 8 },
+  { header: 'Audit Date', key: 'auditDate', width: 14 },
+  { header: 'WW', key: 'ww', width: 8 },
+  { header: 'Shift', key: 'shift', width: 8 },
+  { header: 'Auditors', key: 'auditors', width: 18 },
+  { header: 'Person On Job', key: 'personOnJob', width: 18 },
+  { header: 'Department', key: 'department', width: 16 },
+  { header: 'Platform', key: 'platform', width: 14 },
+  { header: 'Area / Station', key: 'areaStation', width: 20 },
+  { header: 'Group Finding', key: 'groupFinding', width: 16 },
+  { header: 'Category', key: 'category', width: 16 },
+  { header: 'Details Findings', key: 'detailsFindings', width: 40 },
+  { header: 'Picture URL', key: 'picture', width: 30 },
+  { header: 'Remark', key: 'remark', width: 30 },
+  { header: 'Status', key: 'status', width: 12 },
+  { header: 'ICAR No.', key: 'icarNum', width: 16 },
+  { header: 'Action Taken', key: 'actionTaken', width: 30 },
+  { header: 'MQE Engineer', key: 'mqeEngineer', width: 16 },
+];
+
+const PLATFORM_MQE_MAPPING = { Apex: 'Siti Naimah', PDX: 'Larry', Navigator: 'Farid' };
+
+function calculateWW(dateStr) {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  return String(weekNo);
+}
+
+const SEED_RECORDS = [
+  { id: '1', no: 1, auditDate: '2026-05-04', ww: calculateWW('2026-05-04'), shift: 'D', auditors: 'Amalina', personOnJob: 'Alleya', department: 'Production Team', platform: 'Apex', areaStation: 'SMT 2', groupFinding: 'Quality', category: 'Tooling_Labeling', detailsFindings: 'Calibration Label damage. Turn on Tools / Equipment', picture: '', remark: 'Calibration Label damage', status: 'Open', icarNum: '', actionTaken: '', mqeEngineer: 'Siti Naimah' },
+  { id: '2', no: 2, auditDate: '2026-05-04', ww: calculateWW('2026-05-04'), shift: 'D', auditors: 'Zulfikri', personOnJob: 'mathanraj', department: 'IE Team', platform: 'Apex', areaStation: 'Workorder Trolley Area', groupFinding: 'Quality', category: 'ESD_Control', detailsFindings: 'No ESD grounding points', picture: '', remark: 'The trolley has no ESD grounding chain (S-CART003M)', status: 'Open', icarNum: '', actionTaken: '', mqeEngineer: 'Siti Naimah' },
+  { id: '3', no: 3, auditDate: '2026-05-05', ww: '18', shift: 'N', auditors: 'Amalina', personOnJob: 'John Doe', department: 'Production Team', platform: 'Navigator', areaStation: 'Assembly Row 4', groupFinding: 'Quality', category: 'Tooling_Labeling', detailsFindings: 'Tool #45 calibration expired.', picture: '', remark: 'Sent to calibration lab', status: 'In Progress', icarNum: 'ICAR-2026-003', actionTaken: 'Tagging and isolation', mqeEngineer: 'Farid' },
+  { id: '4', no: 4, auditDate: '2026-05-05', ww: '18', shift: 'D', auditors: 'Sarah Connor', personOnJob: 'Mike Ross', department: 'Etching', platform: 'PDX', areaStation: 'Etch A-1', groupFinding: 'Hardware', category: 'Safety', detailsFindings: 'Safety guard loose on platform.', picture: '', remark: 'Fixed by maintenance', status: 'Closed', icarNum: 'ICAR-2026-004', actionTaken: 'Bolt replacement and tightening', mqeEngineer: 'Larry' },
+  { id: '5', no: 5, auditDate: '2026-05-06', ww: '18', shift: 'N', auditors: 'Zulfikri', personOnJob: 'Rachel Zane', department: 'Lithography', platform: 'PDX', areaStation: 'Scanner 5', groupFinding: 'Software', category: 'Process', detailsFindings: 'Login error on control software.', picture: '', remark: 'IT notified', status: 'Open', icarNum: '', actionTaken: 'System reboot performed', mqeEngineer: 'Larry' },
+];
+
+app.use(cors());
+app.use(express.json({ limit: '5mb' }));
+
+// ---------- Excel helpers ----------
+
+async function ensureWorkbook() {
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  if (fs.existsSync(DATA_FILE)) return;
+
+  console.log('No Excel data file found — creating one with seed data:', DATA_FILE);
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet(SHEET_NAME);
+  sheet.columns = COLUMNS;
+  sheet.getRow(1).font = { bold: true };
+  SEED_RECORDS.forEach((r) => sheet.addRow(r));
+  await workbook.xlsx.writeFile(DATA_FILE);
+}
+
+async function readAllRecords() {
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.readFile(DATA_FILE);
+  const sheet = workbook.getWorksheet(SHEET_NAME);
+  const records = [];
+  sheet.eachRow((row, rowNumber) => {
+    if (rowNumber === 1) return; // header
+    const rec = {};
+    COLUMNS.forEach((col, idx) => {
+      const cell = row.getCell(idx + 1);
+      rec[col.key] = cell.value == null ? '' : cell.value;
+    });
+    if (rec.id !== '') records.push(rec);
+  });
+  return records;
+}
+
+async function appendRecord(record) {
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.readFile(DATA_FILE);
+  const sheet = workbook.getWorksheet(SHEET_NAME);
+  sheet.addRow(record);
+  await workbook.xlsx.writeFile(DATA_FILE);
+}
+
+async function updateRecord(id, patch) {
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.readFile(DATA_FILE);
+  const sheet = workbook.getWorksheet(SHEET_NAME);
+  let updated = null;
+  sheet.eachRow((row, rowNumber) => {
+    if (rowNumber === 1) return;
+    if (String(row.getCell(1).value) === String(id)) {
+      COLUMNS.forEach((col, idx) => {
+        if (patch[col.key] !== undefined) row.getCell(idx + 1).value = patch[col.key];
+      });
+      updated = {};
+      COLUMNS.forEach((col, idx) => { updated[col.key] = row.getCell(idx + 1).value; });
+    }
+  });
+  if (updated) await workbook.xlsx.writeFile(DATA_FILE);
+  return updated;
+}
+
+async function deleteRecord(id) {
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.readFile(DATA_FILE);
+  const sheet = workbook.getWorksheet(SHEET_NAME);
+  let rowToDelete = null;
+  sheet.eachRow((row, rowNumber) => {
+    if (rowNumber === 1) return;
+    if (String(row.getCell(1).value) === String(id)) rowToDelete = rowNumber;
+  });
+  if (rowToDelete) {
+    sheet.spliceRows(rowToDelete, 1);
+    await workbook.xlsx.writeFile(DATA_FILE);
+    return true;
+  }
+  return false;
+}
+
+async function nextIdentity() {
+  const records = await readAllRecords();
+  const maxNo = records.reduce((m, r) => Math.max(m, Number(r.no) || 0), 0);
+  return { id: String(Date.now()), no: maxNo + 1 };
+}
+
+// ---------- Image upload ----------
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => cb(null, UPLOADS_DIR),
+    filename: (req, file, cb) => {
+      const ext = path.extname(file.originalname) || '.jpg';
+      cb(null, `${Date.now()}-${Math.round(Math.random() * 1e6)}${ext}`);
+    },
+  }),
+  limits: { fileSize: 8 * 1024 * 1024 },
+});
+
+app.use('/uploads', express.static(UPLOADS_DIR));
+
+app.post('/api/upload', upload.single('image'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No image provided' });
+  const publicUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+  res.json({ url: publicUrl });
+});
+
+// ---------- Records API ----------
+
+app.get('/api/records', async (req, res) => {
+  try {
+    const records = await readAllRecords();
+    res.json(records);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to read Excel data file' });
+  }
+});
+
+app.post('/api/records', async (req, res) => {
+  try {
+    const body = req.body || {};
+    if (!body.auditDate || !body.auditors || !body.department) {
+      return res.status(400).json({ error: 'auditDate, auditors and department are required' });
+    }
+    const { id, no } = await nextIdentity();
+    const record = {
+      id,
+      no,
+      auditDate: body.auditDate,
+      ww: calculateWW(body.auditDate),
+      shift: body.shift || 'D',
+      auditors: body.auditors,
+      personOnJob: body.personOnJob || '',
+      department: body.department,
+      platform: body.platform || '',
+      areaStation: body.areaStation || '',
+      groupFinding: body.groupFinding || '',
+      category: body.category || '',
+      detailsFindings: body.detailsFindings || '',
+      picture: body.picture || '',
+      remark: body.remark || '',
+      status: body.status || 'Open',
+      icarNum: body.icarNum || '',
+      actionTaken: body.actionTaken || '',
+      mqeEngineer: body.mqeEngineer || PLATFORM_MQE_MAPPING[body.platform] || '',
+    };
+    await appendRecord(record);
+    res.status(201).json(record);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to append to Excel data file' });
+  }
+});
+
+app.put('/api/records/:id', async (req, res) => {
+  try {
+    const updated = await updateRecord(req.params.id, req.body || {});
+    if (!updated) return res.status(404).json({ error: 'Record not found' });
+    res.json(updated);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update Excel data file' });
+  }
+});
+
+app.delete('/api/records/:id', async (req, res) => {
+  try {
+    const ok = await deleteRecord(req.params.id);
+    if (!ok) return res.status(404).json({ error: 'Record not found' });
+    res.json({ deleted: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete from Excel data file' });
+  }
+});
+
+// Direct link for Power BI (Get Data -> Web) or manual download.
+app.get('/api/download', (req, res) => {
+  res.download(DATA_FILE, 'ipqc-tracker.xlsx');
+});
+
+app.get('/api/health', (req, res) => res.json({ ok: true }));
+
+ensureWorkbook().then(() => {
+  app.listen(PORT, () => console.log(`IPQC backend running on port ${PORT}`));
+});
