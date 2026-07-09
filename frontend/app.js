@@ -40,7 +40,20 @@ const ICONS = {
   chevronRight: 'chevron-right',
 };
 
-// ---------- State ----------
+// Inline SVG icons for the Add/Quick-Add form — rendered directly in markup so
+// they can never be affected by the Lucide CDN script failing/lagging to load.
+const SVG_ICON = {
+  calendar: '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
+  mapPin: '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
+  tag: '<path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r="1" fill="currentColor"/>',
+  circleCheck: '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+  camera: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>',
+  save: '<path d="M20 6 9 17l-5-5"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+};
+function svgIcon(name, cls = '') {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${cls}">${SVG_ICON[name] || ''}</svg>`;
+}
 const state = {
   view: 'dashboard',
   records: [],
@@ -87,7 +100,7 @@ function toast(message, isError = false) {
   toast._t = setTimeout(() => el.classList.add('hidden'), 2800);
 }
 
-function icons() { if (window.lucide) lucide.createIcons(); }
+function icons() { try { if (window.lucide) lucide.createIcons(); } catch (e) { console.warn('Icon render issue:', e); } }
 
 // ---------- API layer ----------
 const api = {
@@ -501,7 +514,7 @@ function blankAuditRecord() {
 
 function auditFormFieldsHtml(r) {
   return `
-    ${formSection('When & Who', ICONS.calendar, `
+    ${formSection('When & Who', 'calendar', `
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         ${formInput('auditDate', 'Audit Date', r.auditDate, 'date', true)}
         ${formSelect('shift', 'Shift', r.shift, SHIFTS)}
@@ -510,7 +523,7 @@ function auditFormFieldsHtml(r) {
       </div>
     `)}
 
-    ${formSection('Location', ICONS.mapPin, `
+    ${formSection('Location', 'mapPin', `
       <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
         ${formSelect('department', 'Department', r.department, DEPARTMENTS, true)}
         ${formSelect('platform', 'Platform', r.platform, PLATFORMS)}
@@ -518,7 +531,7 @@ function auditFormFieldsHtml(r) {
       </div>
     `)}
 
-    ${formSection('The Finding', ICONS.tag, `
+    ${formSection('The Finding', 'tag', `
       <div class="grid grid-cols-2 gap-4">
         ${formSelect('category', 'Category', r.category, CATEGORIES)}
         ${formInput('groupFinding', 'Group Finding', r.groupFinding, 'text')}
@@ -528,7 +541,7 @@ function auditFormFieldsHtml(r) {
       </div>
     `)}
 
-    ${formSection('Resolution', ICONS.circleCheck, `
+    ${formSection('Resolution', 'circleCheck', `
       <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
         ${formSelect('status', 'Status', r.status, STATUSES)}
         ${formInput('icarNum', 'ICAR Number', r.icarNum, 'text')}
@@ -540,12 +553,12 @@ function auditFormFieldsHtml(r) {
       </div>
     `)}
 
-    ${formSection('Evidence Photo', ICONS.camera, `
+    ${formSection('Evidence Photo', 'camera', `
       <div class="flex items-center gap-4">
         <label for="imageInput" class="cursor-pointer shrink-0 w-20 h-20 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 hover:border-brand-orange hover:bg-orange-50/40 transition-colors flex items-center justify-center text-slate-400" id="imageDropZone">
           ${r.picture
             ? `<img src="${esc(r.picture)}" class="w-full h-full object-cover rounded-[10px]" />`
-            : `<i data-lucide="${ICONS.camera}" class="w-5 h-5"></i>`}
+            : `${svgIcon('camera', 'w-5 h-5')}`}
         </label>
         <input id="imageInput" type="file" accept="image/*" class="hidden" />
         <input type="hidden" name="picture" value="${esc(r.picture)}" id="pictureField" />
@@ -573,7 +586,7 @@ function renderAddAuditForm() {
       ${auditFormFieldsHtml(r)}
       <div class="flex gap-3 pt-3 pb-1">
         <button type="submit" class="flex items-center gap-2 px-5 py-2.5 bg-brand-orange hover:bg-orange-600 text-white text-xs font-black uppercase tracking-widest rounded-lg shadow-sm transition-colors">
-          <i data-lucide="${ICONS.save}" class="w-3.5 h-3.5"></i> ${isEdit ? 'Save Changes' : 'Submit Audit'}
+          ${svgIcon('save', 'w-3.5 h-3.5')} ${isEdit ? 'Save Changes' : 'Submit Audit'}
         </button>
         <button type="button" data-nav="ipqc" class="px-5 py-2.5 bg-white border border-border-subtle hover:bg-slate-50 text-slate-600 text-xs font-black uppercase tracking-widest rounded-lg transition-colors">Cancel</button>
       </div>
@@ -593,14 +606,14 @@ function renderQuickAddPanel() {
           <div class="text-[11px] text-text-muted mt-0.5">Logs straight into the records list — no page change needed.</div>
         </div>
         <button data-action="closeQuickAdd" class="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-400">
-          <i data-lucide="${ICONS.x}" class="w-4 h-4"></i>
+          ${svgIcon('x', 'w-4 h-4')}
         </button>
       </div>
       <form id="auditForm" class="p-6 space-y-4 pb-8">
         ${auditFormFieldsHtml(r)}
         <div class="flex gap-3 pt-3 pb-1">
           <button type="submit" class="flex items-center gap-2 px-5 py-2.5 bg-brand-orange hover:bg-orange-600 text-white text-xs font-black uppercase tracking-widest rounded-lg shadow-sm transition-colors">
-            <i data-lucide="${ICONS.save}" class="w-3.5 h-3.5"></i> Submit Audit
+            ${svgIcon('save', 'w-3.5 h-3.5')} Submit Audit
           </button>
           <button type="button" data-action="closeQuickAdd" class="px-5 py-2.5 bg-white border border-border-subtle hover:bg-slate-50 text-slate-600 text-xs font-black uppercase tracking-widest rounded-lg transition-colors">Cancel</button>
         </div>
@@ -609,12 +622,12 @@ function renderQuickAddPanel() {
   </div>`;
 }
 
-function formSection(title, icon, innerHtml) {
+function formSection(title, iconKey, innerHtml) {
   return `
   <div class="bg-white rounded-xl border border-border-subtle shadow-sm overflow-hidden">
     <div class="flex items-center gap-2.5 px-5 py-3.5 border-b border-border-subtle bg-slate-50/60">
       <div class="w-6 h-6 rounded-md bg-orange-50 text-brand-orange flex items-center justify-center">
-        <i data-lucide="${icon}" class="w-3.5 h-3.5"></i>
+        ${svgIcon(iconKey, 'w-3.5 h-3.5')}
       </div>
       <div class="text-[11px] font-black text-slate-600 uppercase tracking-[0.12em]">${esc(title)}</div>
     </div>
