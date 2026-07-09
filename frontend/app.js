@@ -49,6 +49,8 @@ const state = {
   filters: { search: '', department: '', category: '', status: '' },
   editingRecord: null, // record object when editing, null when adding
   previewImage: null,
+  quickAddOpen: false,
+  highlightId: null, // id of a just-added/edited record, briefly flashed in the table
 };
 
 // ---------- Utilities ----------
@@ -145,6 +147,7 @@ function render() {
       </main>
     </div>
     ${state.previewImage ? renderImageLightbox() : ''}
+    ${state.quickAddOpen ? renderQuickAddPanel() : ''}
   `;
   icons();
   bindEvents();
@@ -192,7 +195,6 @@ function renderCurrentView() {
     case 'dashboard': return renderDashboard();
     case 'ipqc': return renderIPQCList();
     case 'add-audit': return renderAddAuditForm();
-    case 'history': return renderHistory();
     case 'settings': return renderSettings();
     default: return renderDashboard();
   }
@@ -204,7 +206,6 @@ function renderSidebar() {
     { id: 'dashboard', label: 'Dashboard', icon: ICONS.dashboard },
     { id: 'ipqc', label: 'IPQC Records', icon: ICONS.ipqc },
     { id: 'add-audit', label: 'Add Audit', icon: ICONS.add },
-    { id: 'history', label: 'History', icon: ICONS.history },
     { id: 'settings', label: 'Settings', icon: ICONS.settings },
   ];
   return `
@@ -231,7 +232,7 @@ function renderSidebar() {
 }
 
 function renderHeader() {
-  const titles = { dashboard: 'Dashboard', ipqc: 'IPQC Records', 'add-audit': 'Add Audit', history: 'History', settings: 'Settings' };
+  const titles = { dashboard: 'Dashboard', ipqc: 'IPQC Records', 'add-audit': 'Add Audit', settings: 'Settings' };
   return `
   <header class="h-16 shrink-0 bg-white border-b border-border-subtle flex items-center justify-between px-6">
     <h1 class="text-sm font-black text-slate-800 uppercase tracking-wider">${titles[state.view] || ''}</h1>
@@ -352,48 +353,63 @@ function drawCharts() {
 // ---------- IPQC List / History ----------
 function filteredRecords() {
   const f = state.filters;
-  return state.records.filter(r => {
-    if (f.department && r.department !== f.department) return false;
-    if (f.category && r.category !== f.category) return false;
-    if (f.status && r.status !== f.status) return false;
-    if (f.search) {
-      const q = f.search.toLowerCase();
-      const hay = `${r.auditors} ${r.personOnJob} ${r.detailsFindings} ${r.areaStation} ${r.icarNum}`.toLowerCase();
-      if (!hay.includes(q)) return false;
-    }
-    return true;
-  });
+  return state.records
+    .filter(r => {
+      if (f.department && r.department !== f.department) return false;
+      if (f.category && r.category !== f.category) return false;
+      if (f.status && r.status !== f.status) return false;
+      if (f.search) {
+        const q = f.search.toLowerCase();
+        const hay = `${r.auditors} ${r.personOnJob} ${r.detailsFindings} ${r.areaStation} ${r.icarNum}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    })
+    .sort((a, b) => new Date(b.auditDate) - new Date(a.auditDate));
 }
 
 function renderFilterBar() {
   const f = state.filters;
+  const recs = state.records;
+  const counts = {
+    '': recs.length,
+    Open: recs.filter(r => r.status === 'Open').length,
+    'In Progress': recs.filter(r => r.status === 'In Progress').length,
+    Closed: recs.filter(r => r.status === 'Closed').length,
+  };
+  const chipStyle = (s) => s === f.status
+    ? (s === 'Open' ? 'bg-rose-500 text-white' : s === 'In Progress' ? 'bg-amber-500 text-white' : s === 'Closed' ? 'bg-emerald-500 text-white' : 'bg-slate-900 text-white')
+    : 'bg-slate-100 text-slate-500 hover:bg-slate-200';
+
   return `
-  <div class="bg-white p-4 rounded-xl border border-border-subtle shadow-sm flex flex-wrap gap-3 items-end">
-    <div class="flex-1 min-w-[180px]">
-      <label class="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Search</label>
-      <input id="filterSearch" type="text" value="${esc(f.search)}" placeholder="Search findings, auditor, ICAR…"
-        class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 text-[11px] font-semibold focus:outline-none focus:border-brand-orange" />
+  <div class="space-y-3">
+    <div class="flex flex-wrap gap-2">
+      ${['', 'Open', 'In Progress', 'Closed'].map(s => `
+        <button data-status-chip="${s}" class="px-3.5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-colors ${chipStyle(s)}">
+          ${s === '' ? 'All' : s} <span class="opacity-70">${counts[s]}</span>
+        </button>
+      `).join('')}
     </div>
-    <div>
-      <label class="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Department</label>
-      <select id="filterDepartment" class="mt-1 bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 text-[11px] font-semibold">
-        <option value="">All</option>
-        ${DEPARTMENTS.map(d => `<option value="${esc(d)}" ${f.department === d ? 'selected' : ''}>${esc(d)}</option>`).join('')}
-      </select>
-    </div>
-    <div>
-      <label class="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Category</label>
-      <select id="filterCategory" class="mt-1 bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 text-[11px] font-semibold">
-        <option value="">All</option>
-        ${CATEGORIES.map(c => `<option value="${esc(c)}" ${f.category === c ? 'selected' : ''}>${esc(c)}</option>`).join('')}
-      </select>
-    </div>
-    <div>
-      <label class="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</label>
-      <select id="filterStatus" class="mt-1 bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 text-[11px] font-semibold">
-        <option value="">All</option>
-        ${STATUSES.map(s => `<option value="${esc(s)}" ${f.status === s ? 'selected' : ''}>${esc(s)}</option>`).join('')}
-      </select>
+    <div class="bg-white p-4 rounded-xl border border-border-subtle shadow-sm flex flex-wrap gap-3 items-end">
+      <div class="flex-1 min-w-[180px]">
+        <label class="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Search</label>
+        <input id="filterSearch" type="text" value="${esc(f.search)}" placeholder="Search findings, auditor, ICAR…"
+          class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 text-[11px] font-semibold focus:outline-none focus:border-brand-orange" />
+      </div>
+      <div>
+        <label class="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Department</label>
+        <select id="filterDepartment" class="mt-1 bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 text-[11px] font-semibold">
+          <option value="">All</option>
+          ${DEPARTMENTS.map(d => `<option value="${esc(d)}" ${f.department === d ? 'selected' : ''}>${esc(d)}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <label class="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Category</label>
+        <select id="filterCategory" class="mt-1 bg-slate-50 border border-slate-200 rounded-lg py-2 px-3 text-[11px] font-semibold">
+          <option value="">All</option>
+          ${CATEGORIES.map(c => `<option value="${esc(c)}" ${f.category === c ? 'selected' : ''}>${esc(c)}</option>`).join('')}
+        </select>
+      </div>
     </div>
   </div>`;
 }
@@ -430,7 +446,7 @@ function renderTable(records, { showActions = true } = {}) {
       </thead>
       <tbody>
         ${records.map(r => `
-          <tr class="border-b border-border-subtle/60 odd:bg-white even:bg-slate-50/40 hover:bg-orange-50/50 transition-colors">
+          <tr class="border-b border-border-subtle/60 odd:bg-white even:bg-slate-50/40 hover:bg-orange-50/50 transition-colors ${String(r.id) === String(state.highlightId) ? 'row-flash' : ''}">
             <td class="px-3 py-2 font-bold">${esc(r.no)}</td>
             <td class="px-3 py-2">${esc(r.auditDate)}</td>
             <td class="px-3 py-2">${esc(r.ww)}</td>
@@ -463,27 +479,87 @@ function renderTable(records, { showActions = true } = {}) {
 function renderIPQCList() {
   return `
   <div class="space-y-4 fade-in">
+    <div class="flex items-center justify-between">
+      <div class="text-xs text-text-muted font-semibold">Every audit record, most recent first — imported history and everything logged through this app, in one place.</div>
+      <button data-action="openQuickAdd" class="shrink-0 flex items-center gap-2 px-4 py-2.5 bg-brand-orange hover:bg-orange-600 text-white text-xs font-black uppercase tracking-widest rounded-lg shadow-sm transition-colors">
+        <i data-lucide="${ICONS.add}" class="w-3.5 h-3.5"></i> Add Finding
+      </button>
+    </div>
     ${renderFilterBar()}
     ${renderTable(filteredRecords())}
   </div>`;
 }
 
-function renderHistory() {
-  const sorted = [...state.records].sort((a, b) => new Date(b.auditDate) - new Date(a.auditDate));
-  return `
-  <div class="space-y-4 fade-in">
-    <div class="text-xs font-bold text-text-muted">Full audit history, most recent first. This includes both the original tracker data and everything submitted through this app.</div>
-    ${renderTable(sorted, { showActions: false })}
-  </div>`;
-}
-
 // ---------- Add / Edit Audit Form ----------
-function renderAddAuditForm() {
-  const r = state.editingRecord || {
+function blankAuditRecord() {
+  return {
     auditDate: new Date().toISOString().split('T')[0], shift: 'D', auditors: '', personOnJob: '',
     department: DEPARTMENTS[0], platform: PLATFORMS[0], areaStation: '', groupFinding: '', category: CATEGORIES[0],
     detailsFindings: '', picture: '', remark: '', status: 'Open', icarNum: '', actionTaken: '', mqeEngineer: '',
   };
+}
+
+function auditFormFieldsHtml(r) {
+  return `
+    ${formSection('When & Who', ICONS.calendar, `
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        ${formInput('auditDate', 'Audit Date', r.auditDate, 'date', true)}
+        ${formSelect('shift', 'Shift', r.shift, SHIFTS)}
+        ${formInput('auditors', 'IPQC Auditor', r.auditors, 'text', true)}
+        ${formInput('personOnJob', 'PIC Finding', r.personOnJob, 'text')}
+      </div>
+    `)}
+
+    ${formSection('Location', ICONS.mapPin, `
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+        ${formSelect('department', 'Department', r.department, DEPARTMENTS, true)}
+        ${formSelect('platform', 'Platform', r.platform, PLATFORMS)}
+        ${formInput('areaStation', 'Area / Station', r.areaStation, 'text')}
+      </div>
+    `)}
+
+    ${formSection('The Finding', ICONS.tag, `
+      <div class="grid grid-cols-2 gap-4">
+        ${formSelect('category', 'Category', r.category, CATEGORIES)}
+        ${formInput('groupFinding', 'Group Finding', r.groupFinding, 'text')}
+      </div>
+      <div class="mt-4">
+        ${formTextarea('detailsFindings', 'What did you observe?', r.detailsFindings, 3, true)}
+      </div>
+    `)}
+
+    ${formSection('Resolution', ICONS.circleCheck, `
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+        ${formSelect('status', 'Status', r.status, STATUSES)}
+        ${formInput('icarNum', 'ICAR Number', r.icarNum, 'text')}
+        ${formInput('mqeEngineer', 'MQE Engineer', r.mqeEngineer, 'text')}
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        ${formTextarea('actionTaken', 'Action Taken', r.actionTaken, 2)}
+        ${formTextarea('remark', 'Remark', r.remark, 2)}
+      </div>
+    `)}
+
+    ${formSection('Evidence Photo', ICONS.camera, `
+      <div class="flex items-center gap-4">
+        <label for="imageInput" class="cursor-pointer shrink-0 w-20 h-20 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 hover:border-brand-orange hover:bg-orange-50/40 transition-colors flex items-center justify-center text-slate-400" id="imageDropZone">
+          ${r.picture
+            ? `<img src="${esc(r.picture)}" class="w-full h-full object-cover rounded-[10px]" />`
+            : `<i data-lucide="${ICONS.camera}" class="w-5 h-5"></i>`}
+        </label>
+        <input id="imageInput" type="file" accept="image/*" class="hidden" />
+        <input type="hidden" name="picture" value="${esc(r.picture)}" id="pictureField" />
+        <div class="text-xs">
+          <div class="font-bold text-slate-600">${r.picture ? 'Photo attached' : 'No photo yet'}</div>
+          <div class="text-text-muted mt-0.5">Click the box to ${r.picture ? 'replace it' : 'attach evidence'} — optional but recommended.</div>
+        </div>
+      </div>
+    `)}
+  `;
+}
+
+function renderAddAuditForm() {
+  const r = state.editingRecord || blankAuditRecord();
   const isEdit = !!state.editingRecord;
 
   return `
@@ -494,69 +570,42 @@ function renderAddAuditForm() {
     </div>
 
     <form id="auditForm" class="space-y-4">
-
-      ${formSection('When & Who', ICONS.calendar, `
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          ${formInput('auditDate', 'Audit Date', r.auditDate, 'date', true)}
-          ${formSelect('shift', 'Shift', r.shift, SHIFTS)}
-          ${formInput('auditors', 'IPQC Auditor', r.auditors, 'text', true)}
-          ${formInput('personOnJob', 'PIC Finding', r.personOnJob, 'text')}
-        </div>
-      `)}
-
-      ${formSection('Location', ICONS.mapPin, `
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-          ${formSelect('department', 'Department', r.department, DEPARTMENTS, true)}
-          ${formSelect('platform', 'Platform', r.platform, PLATFORMS)}
-          ${formInput('areaStation', 'Area / Station', r.areaStation, 'text')}
-        </div>
-      `)}
-
-      ${formSection('The Finding', ICONS.tag, `
-        <div class="grid grid-cols-2 gap-4">
-          ${formSelect('category', 'Category', r.category, CATEGORIES)}
-          ${formInput('groupFinding', 'Group Finding', r.groupFinding, 'text')}
-        </div>
-        <div class="mt-4">
-          ${formTextarea('detailsFindings', 'What did you observe?', r.detailsFindings, 3, true)}
-        </div>
-      `)}
-
-      ${formSection('Resolution', ICONS.circleCheck, `
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-          ${formSelect('status', 'Status', r.status, STATUSES)}
-          ${formInput('icarNum', 'ICAR Number', r.icarNum, 'text')}
-          ${formInput('mqeEngineer', 'MQE Engineer', r.mqeEngineer, 'text')}
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          ${formTextarea('actionTaken', 'Action Taken', r.actionTaken, 2)}
-          ${formTextarea('remark', 'Remark', r.remark, 2)}
-        </div>
-      `)}
-
-      ${formSection('Evidence Photo', ICONS.camera, `
-        <div class="flex items-center gap-4">
-          <label for="imageInput" class="cursor-pointer shrink-0 w-20 h-20 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 hover:border-brand-orange hover:bg-orange-50/40 transition-colors flex items-center justify-center text-slate-400" id="imageDropZone">
-            ${r.picture
-              ? `<img src="${esc(r.picture)}" class="w-full h-full object-cover rounded-[10px]" />`
-              : `<i data-lucide="${ICONS.camera}" class="w-5 h-5"></i>`}
-          </label>
-          <input id="imageInput" type="file" accept="image/*" class="hidden" />
-          <input type="hidden" name="picture" value="${esc(r.picture)}" id="pictureField" />
-          <div class="text-xs">
-            <div class="font-bold text-slate-600">${r.picture ? 'Photo attached' : 'No photo yet'}</div>
-            <div class="text-text-muted mt-0.5">Click the box to ${r.picture ? 'replace it' : 'attach evidence'} — optional but recommended.</div>
-          </div>
-        </div>
-      `)}
-
-      <div class="sticky bottom-0 bg-bg-main/95 backdrop-blur pt-3 pb-1 flex gap-3">
+      ${auditFormFieldsHtml(r)}
+      <div class="flex gap-3 pt-3 pb-1">
         <button type="submit" class="flex items-center gap-2 px-5 py-2.5 bg-brand-orange hover:bg-orange-600 text-white text-xs font-black uppercase tracking-widest rounded-lg shadow-sm transition-colors">
           <i data-lucide="${ICONS.save}" class="w-3.5 h-3.5"></i> ${isEdit ? 'Save Changes' : 'Submit Audit'}
         </button>
         <button type="button" data-nav="ipqc" class="px-5 py-2.5 bg-white border border-border-subtle hover:bg-slate-50 text-slate-600 text-xs font-black uppercase tracking-widest rounded-lg transition-colors">Cancel</button>
       </div>
     </form>
+  </div>`;
+}
+
+function renderQuickAddPanel() {
+  const r = blankAuditRecord();
+  return `
+  <div class="fixed inset-0 z-40 flex justify-end">
+    <div data-action="closeQuickAdd" class="absolute inset-0 bg-slate-900/40 backdrop-blur-[1px]"></div>
+    <div class="relative w-full max-w-xl h-full bg-bg-main shadow-2xl slide-in-panel overflow-y-auto">
+      <div class="sticky top-0 z-10 bg-white border-b border-border-subtle px-6 py-4 flex items-center justify-between">
+        <div>
+          <div class="text-sm font-black text-slate-900">Quick Add Finding</div>
+          <div class="text-[11px] text-text-muted mt-0.5">Logs straight into the records list — no page change needed.</div>
+        </div>
+        <button data-action="closeQuickAdd" class="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-400">
+          <i data-lucide="${ICONS.x}" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <form id="auditForm" class="p-6 space-y-4 pb-8">
+        ${auditFormFieldsHtml(r)}
+        <div class="flex gap-3 pt-3 pb-1">
+          <button type="submit" class="flex items-center gap-2 px-5 py-2.5 bg-brand-orange hover:bg-orange-600 text-white text-xs font-black uppercase tracking-widest rounded-lg shadow-sm transition-colors">
+            <i data-lucide="${ICONS.save}" class="w-3.5 h-3.5"></i> Submit Audit
+          </button>
+          <button type="button" data-action="closeQuickAdd" class="px-5 py-2.5 bg-white border border-border-subtle hover:bg-slate-50 text-slate-600 text-xs font-black uppercase tracking-widest rounded-lg transition-colors">Cancel</button>
+        </div>
+      </form>
+    </div>
   </div>`;
 }
 
@@ -631,6 +680,7 @@ function bindEvents() {
     btn.addEventListener('click', () => {
       state.view = btn.getAttribute('data-nav');
       if (state.view === 'add-audit') state.editingRecord = null;
+      state.quickAddOpen = false;
       render();
     });
   });
@@ -638,8 +688,22 @@ function bindEvents() {
   const retryBtn = document.querySelector('[data-action="retry"]');
   if (retryBtn) retryBtn.addEventListener('click', loadRecords);
 
+  // quick add panel
+  const openQuickAddBtn = document.querySelector('[data-action="openQuickAdd"]');
+  if (openQuickAddBtn) openQuickAddBtn.addEventListener('click', () => {
+    state.editingRecord = null; state.quickAddOpen = true; render();
+  });
+  document.querySelectorAll('[data-action="closeQuickAdd"]').forEach(b => b.addEventListener('click', () => {
+    state.quickAddOpen = false; render();
+  }));
+
+  // status filter chips
+  document.querySelectorAll('[data-status-chip]').forEach(b => b.addEventListener('click', () => {
+    state.filters.status = b.getAttribute('data-status-chip'); render();
+  }));
+
   // filters
-  ['filterSearch', 'filterDepartment', 'filterCategory', 'filterStatus'].forEach(id => {
+  ['filterSearch', 'filterDepartment', 'filterCategory'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
     const key = id.replace('filter', '').replace(/^\w/, c => c.toLowerCase());
@@ -657,6 +721,7 @@ function bindEvents() {
   document.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => {
     const id = b.getAttribute('data-edit');
     state.editingRecord = state.records.find(r => String(r.id) === String(id));
+    state.quickAddOpen = false;
     state.view = 'add-audit'; render();
   }));
 
@@ -696,18 +761,22 @@ function bindEvents() {
     const payload = Object.fromEntries(fd.entries());
     if (!payload.mqeEngineer) payload.mqeEngineer = PLATFORM_MQE_MAPPING[payload.platform] || '';
     try {
+      let savedRecord;
       if (state.editingRecord) {
-        const updated = await api.update(state.editingRecord.id, payload);
-        state.records = state.records.map(r => String(r.id) === String(updated.id) ? updated : r);
+        savedRecord = await api.update(state.editingRecord.id, payload);
+        state.records = state.records.map(r => String(r.id) === String(savedRecord.id) ? savedRecord : r);
         toast('Record updated');
       } else {
-        const created = await api.create(payload);
-        state.records.push(created);
+        savedRecord = await api.create(payload);
+        state.records.push(savedRecord);
         toast('Audit submitted');
       }
       state.editingRecord = null;
+      state.quickAddOpen = false;
       state.view = 'ipqc';
+      state.highlightId = savedRecord.id;
       render();
+      setTimeout(() => { state.highlightId = null; render(); }, 2000);
     } catch (err) { toast(err.message, true); }
   });
 
