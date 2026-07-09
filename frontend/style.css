@@ -8,4 +8,13 @@
 .fade-in { animation: fadeIn .15s ease-out; }
 .slide-up { animation: slideUp .18s ease-out; }
 
+@keyframes slideInPanel { from { transform: translateX(100%); } to { transform: translateX(0); } }
+.slide-in-panel { animation: slideInPanel .22s ease-out; }
+
+@keyframes rowFlash {
+  0% { background-color: rgba(241, 93, 34, 0.18); }
+  100% { background-color: transparent; }
+}
+.row-flash { animation: rowFlash 1.8s ease-out; }
+
 [data-lucide] { width: 16px; height: 16px; }

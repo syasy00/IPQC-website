@@ -40,29 +40,16 @@ const ICONS = {
   chevronRight: 'chevron-right',
 };
 
-// Inline SVG icons — rendered directly in markup so they work even if Lucide CDN fails/lags
+// Inline SVG icons for the Add/Quick-Add form — rendered directly in markup so
+// they can never be affected by the Lucide CDN script failing/lagging to load.
 const SVG_ICON = {
-  dashboard: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
-  ipqc: '<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
-  add: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
-  settings: '<circle cx="12" cy="12" r="3"/><path d="M12 1v6m6.22-2.22-4.24 4.24m5.08 5.98h-6m2.22 6.22-4.24-4.24m-5.98 5.08v-6M1 12.22l4.24-4.24M5.3 19.28l5.98-5.08"/>',
-  search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>',
-  edit: '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>',
-  trash: '<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>',
-  image: '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>',
-  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
-  wifiOff: '<line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10 10 0 0 1 19 12.55"/><path d="M5 12.55a10 10 0 0 1 14.82-1.79"/><path d="M10.88 16.24A3 3 0 0 1 15 15"/><path d="M2.24 8.25a11.36 11.36 0 0 1 15.02-1.26"/><path d="M12 20h.01"/>',
-  clipboardList: '<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="7" y1="8" x2="17" y2="8"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="7" y1="16" x2="17" y2="16"/><path d="M9 3v-1a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/>',
-  circleAlert: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>',
-  circleCheck: '<circle cx="12" cy="12" r="10"/><polyline points="16 12 12 8 8 12"/>',
-  clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
-  inbox: '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.88 4H7.12a2 2 0 0 0-1.67.11z"/>',
-  calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
-  mapPin: '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>',
-  tag: '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>',
-  camera: '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
-  save: '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>',
-  x: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+  calendar: '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
+  mapPin: '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
+  tag: '<path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r="1" fill="currentColor"/>',
+  circleCheck: '<path d="M20 6 9 17l-5-5"/>',
+  camera: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>',
+  save: '<path d="M20 6 9 17l-5-5"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
 };
 function svgIcon(name, cls = '') {
   return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${cls}">${SVG_ICON[name] || ''}</svg>`;
@@ -75,7 +62,6 @@ const state = {
   filters: { search: '', department: '', category: '', status: '' },
   editingRecord: null, // record object when editing, null when adding
   previewImage: null,
-  quickAddOpen: false,
   highlightId: null, // id of a just-added/edited record, briefly flashed in the table
 };
 
@@ -173,7 +159,6 @@ function render() {
       </main>
     </div>
     ${state.previewImage ? renderImageLightbox() : ''}
-    ${state.quickAddOpen ? renderQuickAddPanel() : ''}
   `;
   icons();
   bindEvents();
@@ -191,7 +176,7 @@ function renderError() {
   return `
   <div class="flex flex-col items-center justify-center h-full gap-5 max-w-md mx-auto text-center">
     <div class="w-14 h-14 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-500">
-      ${svgIcon('wifiOff', 'w-7 h-7')}
+      <i data-lucide="${ICONS.wifiOff}" class="w-7 h-7"></i>
     </div>
     <div>
       <div class="text-base font-black text-slate-800">Can't reach the backend</div>
@@ -230,8 +215,8 @@ function renderCurrentView() {
 function renderSidebar() {
   const items = [
     { id: 'dashboard', label: 'Dashboard', icon: ICONS.dashboard },
+    { id: 'add-audit', label: 'Add Finding', icon: ICONS.add },
     { id: 'ipqc', label: 'IPQC Records', icon: ICONS.ipqc },
-    { id: 'add-audit', label: 'Add Audit', icon: ICONS.add },
     { id: 'settings', label: 'Settings', icon: ICONS.settings },
   ];
   return `
@@ -243,7 +228,7 @@ function renderSidebar() {
     <nav class="flex-1 py-4 px-2.5 space-y-0.5">
       ${items.map(it => `
         <button data-nav="${it.id}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg transition-all text-[11px] font-semibold ${state.view === it.id ? 'bg-sidebar-active text-white' : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/50'}">
-          <span class="${state.view === it.id ? 'text-brand-orange' : 'text-slate-500'}">${svgIcon(it.id, 'w-4 h-4')}</span>
+          <span class="${state.view === it.id ? 'text-brand-orange' : 'text-slate-500'}"><i data-lucide="${it.icon}" class="w-4 h-4"></i></span>
           <span class="tracking-wide uppercase">${it.label}</span>
           ${state.view === it.id ? `<span class="ml-auto w-1.5 h-1.5 rounded-full bg-brand-orange"></span>` : ''}
         </button>
@@ -251,14 +236,14 @@ function renderSidebar() {
     </nav>
     <div class="p-4 border-t border-white/5">
       <a href="${API_BASE}/api/download" class="flex items-center gap-2 text-[10px] font-bold text-slate-400 hover:text-white transition-colors">
-        ${svgIcon('download', 'w-4 h-4')} Download Excel
+        <i data-lucide="${ICONS.download}"></i> Download Excel
       </a>
     </div>
   </aside>`;
 }
 
 function renderHeader() {
-  const titles = { dashboard: 'Dashboard', ipqc: 'IPQC Records', 'add-audit': 'Add Audit', settings: 'Settings' };
+  const titles = { dashboard: 'Dashboard', ipqc: 'IPQC Records', 'add-audit': 'Add Finding', settings: 'Settings' };
   return `
   <header class="h-16 shrink-0 bg-white border-b border-border-subtle flex items-center justify-between px-6">
     <h1 class="text-sm font-black text-slate-800 uppercase tracking-wider">${titles[state.view] || ''}</h1>
@@ -304,7 +289,7 @@ function renderEmptyDashboard() {
   return `
   <div class="flex flex-col items-center justify-center h-full gap-4 text-center fade-in">
     <div class="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
-      ${svgIcon('inbox', 'w-7 h-7')}
+      <i data-lucide="${ICONS.inbox}" class="w-7 h-7"></i>
     </div>
     <div>
       <div class="text-sm font-black text-slate-800">No audit records yet</div>
@@ -445,7 +430,7 @@ function renderTable(records, { showActions = true } = {}) {
     return `
     <div class="bg-white p-12 rounded-xl border border-border-subtle text-center flex flex-col items-center gap-3">
       <div class="w-11 h-11 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400">
-        ${svgIcon('search', 'w-5 h-5')}
+        <i data-lucide="${ICONS.search}" class="w-5 h-5"></i>
       </div>
       <div class="text-xs font-bold text-slate-700">No records match your filters</div>
       <div class="text-[11px] text-text-muted">Try clearing a filter or adjusting your search.</div>
@@ -486,13 +471,13 @@ function renderTable(records, { showActions = true } = {}) {
             </td>
             <td class="px-3 py-2">${esc(r.icarNum)}</td>
             <td class="px-3 py-2">
-              ${r.picture ? `<button data-preview="${esc(r.picture)}" class="text-brand-orange">${svgIcon('image', 'w-4 h-4')}</button>` : '—'}
+              ${r.picture ? `<button data-preview="${esc(r.picture)}" class="text-brand-orange"><i data-lucide="${ICONS.image}"></i></button>` : '—'}
             </td>
             ${showActions ? `
             <td class="px-3 py-2">
               <div class="flex gap-2">
-                <button data-edit="${esc(r.id)}" class="text-slate-400 hover:text-brand-orange">${svgIcon('edit', 'w-4 h-4')}</button>
-                <button data-delete="${esc(r.id)}" class="text-slate-400 hover:text-rose-600">${svgIcon('trash', 'w-4 h-4')}</button>
+                <button data-edit="${esc(r.id)}" class="text-slate-400 hover:text-brand-orange"><i data-lucide="${ICONS.edit}"></i></button>
+                <button data-delete="${esc(r.id)}" class="text-slate-400 hover:text-rose-600"><i data-lucide="${ICONS.trash}"></i></button>
               </div>
             </td>` : ''}
           </tr>
@@ -505,12 +490,7 @@ function renderTable(records, { showActions = true } = {}) {
 function renderIPQCList() {
   return `
   <div class="space-y-4 fade-in">
-    <div class="flex items-center justify-between">
-      <div class="text-xs text-text-muted font-semibold">Every audit record, most recent first — imported history and everything logged through this app, in one place.</div>
-      <button data-action="openQuickAdd" class="shrink-0 flex items-center gap-2 px-4 py-2.5 bg-brand-orange hover:bg-orange-600 text-white text-xs font-black uppercase tracking-widest rounded-lg shadow-sm transition-colors">
-          ${svgIcon('add', 'w-3.5 h-3.5')} Add Finding
-      </button>
-    </div>
+    <div class="text-xs text-text-muted font-semibold">Every audit record, most recent first — imported history and everything logged through this app, in one place.</div>
     ${renderFilterBar()}
     ${renderTable(filteredRecords())}
   </div>`;
@@ -607,34 +587,6 @@ function renderAddAuditForm() {
   </div>`;
 }
 
-function renderQuickAddPanel() {
-  const r = blankAuditRecord();
-  return `
-  <div class="fixed inset-0 z-40 flex justify-end">
-    <div data-action="closeQuickAdd" class="absolute inset-0 bg-slate-900/40 backdrop-blur-[1px]"></div>
-    <div class="relative w-full max-w-xl h-full bg-bg-main shadow-2xl slide-in-panel overflow-y-auto">
-      <div class="sticky top-0 z-10 bg-white border-b border-border-subtle px-6 py-4 flex items-center justify-between">
-        <div>
-          <div class="text-sm font-black text-slate-900">Quick Add Finding</div>
-          <div class="text-[11px] text-text-muted mt-0.5">Logs straight into the records list — no page change needed.</div>
-        </div>
-        <button data-action="closeQuickAdd" class="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-400">
-          ${svgIcon('x', 'w-4 h-4')}
-        </button>
-      </div>
-      <form id="auditForm" class="p-6 space-y-4 pb-8">
-        ${auditFormFieldsHtml(r)}
-        <div class="flex gap-3 pt-3 pb-1">
-          <button type="submit" class="flex items-center gap-2 px-5 py-2.5 bg-brand-orange hover:bg-orange-600 text-white text-xs font-black uppercase tracking-widest rounded-lg shadow-sm transition-colors">
-            ${svgIcon('save', 'w-3.5 h-3.5')} Submit Audit
-          </button>
-          <button type="button" data-action="closeQuickAdd" class="px-5 py-2.5 bg-white border border-border-subtle hover:bg-slate-50 text-slate-600 text-xs font-black uppercase tracking-widest rounded-lg transition-colors">Cancel</button>
-        </div>
-      </form>
-    </div>
-  </div>`;
-}
-
 function formSection(title, iconKey, innerHtml) {
   return `
   <div class="bg-white rounded-xl border border-border-subtle shadow-sm overflow-hidden">
@@ -706,22 +658,12 @@ function bindEvents() {
     btn.addEventListener('click', () => {
       state.view = btn.getAttribute('data-nav');
       if (state.view === 'add-audit') state.editingRecord = null;
-      state.quickAddOpen = false;
       render();
     });
   });
 
   const retryBtn = document.querySelector('[data-action="retry"]');
   if (retryBtn) retryBtn.addEventListener('click', loadRecords);
-
-  // quick add panel
-  const openQuickAddBtn = document.querySelector('[data-action="openQuickAdd"]');
-  if (openQuickAddBtn) openQuickAddBtn.addEventListener('click', () => {
-    state.editingRecord = null; state.quickAddOpen = true; render();
-  });
-  document.querySelectorAll('[data-action="closeQuickAdd"]').forEach(b => b.addEventListener('click', () => {
-    state.quickAddOpen = false; render();
-  }));
 
   // status filter chips
   document.querySelectorAll('[data-status-chip]').forEach(b => b.addEventListener('click', () => {
@@ -747,7 +689,6 @@ function bindEvents() {
   document.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => {
     const id = b.getAttribute('data-edit');
     state.editingRecord = state.records.find(r => String(r.id) === String(id));
-    state.quickAddOpen = false;
     state.view = 'add-audit'; render();
   }));
 
@@ -798,7 +739,6 @@ function bindEvents() {
         toast('Audit submitted');
       }
       state.editingRecord = null;
-      state.quickAddOpen = false;
       state.view = 'ipqc';
       state.highlightId = savedRecord.id;
       render();
