@@ -4,13 +4,70 @@
    defined in /backend (see config.js for the API_BASE URL).
    ============================================================ */
 
-// ---------- Constants ----------
-const DEPARTMENTS = ['Etching', 'Lithography', 'Deposition', 'Doping', 'Packaging', 'Mfg Engineering', 'Production Team', 'IE Team'];
-const CATEGORIES = ['Standard', 'Quality', 'Safety', 'Process'];
-const PLATFORMS = ['Apex', 'PDX', 'Navigator'];
-const PLATFORM_MQE_MAPPING = { Apex: 'Siti Naimah', PDX: 'Larry', Navigator: 'Farid' };
-const STATUSES = ['Open', 'In Progress', 'Closed'];
-const SHIFTS = ['D', 'N'];
+// Constants 
+const DEPARTMENTS = [
+  'Production Team',
+  'Test Team',
+  'IE Team',
+  'Quality Team',
+  'Calibration Team',
+  'PE Team'
+];
+
+const CATEGORIES = [
+  'Compliance_6S',
+  'Calibration_PM',
+  'Documentation_And_Process_Adherence',
+  'ESD_Control',
+  'Material_Control_And_Chemical_Management',
+  'Safety_Concern',
+  'Tooling_Labeling',
+  'Training_Certification'
+];
+
+const PLATFORMS = [
+  'Apex',
+  'Ascent',
+  'Cesar',
+  'Cumulus',
+  'Evos',
+  'Ewave',
+  'HASS & Burn In',
+  'HV',
+  'HV (MV)',
+  'HV (OL)',
+  'Insource (Potting)',
+  'Maxstream',
+  'Navi I/AZX/LM/LFM/RFG',
+  'Navi II',
+  'OBA & PACKING',
+  'Packing',
+  'Paramount',
+  'PDX',
+  'Pinnacle III',
+  'Scorpius',
+  'Solvix',
+  'VHF'
+];
+
+const PLATFORM_MQE_MAPPING = {
+  Apex: 'Siti Naimah',
+  PDX: 'Larry',
+  'Navi I/AZX/LM/LFM/RFG': 'Farid',
+  'Navi II': 'Farid'
+};
+
+const STATUSES = [
+  'Open',
+  'In Progress',
+  'Closed'
+];
+
+const SHIFTS = [
+  'A',
+  'B',
+  'C'
+];
 
 const ICONS = {
   dashboard: 'layout-dashboard',
@@ -40,8 +97,7 @@ const ICONS = {
   chevronRight: 'chevron-right',
 };
 
-// Inline SVG icons for the Add/Quick-Add form — rendered directly in markup so
-// they can never be affected by the Lucide CDN script failing/lagging to load.
+
 const SVG_ICON = {
   calendar: '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
   mapPin: '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
@@ -65,7 +121,7 @@ const state = {
   highlightId: null, // id of a just-added/edited record, briefly flashed in the table
 };
 
-// ---------- Utilities ----------
+// Utilities 
 function calculateWW(dateStr) {
   if (!dateStr) return '';
   const date = new Date(dateStr);
@@ -101,7 +157,7 @@ function toast(message, isError = false) {
 
 function icons() { try { if (window.lucide) lucide.createIcons(); } catch (e) { console.warn('Icon render issue:', e); } }
 
-// ---------- API layer ----------
+// API layer 
 const api = {
   async list() {
     const res = await fetch(`${API_BASE}/api/records`);
@@ -147,7 +203,7 @@ async function loadRecords() {
   }
 }
 
-// ---------- Root render ----------
+// Root render
 function render() {
   const app = document.getElementById('app');
   app.innerHTML = `
@@ -211,7 +267,7 @@ function renderCurrentView() {
   }
 }
 
-// ---------- Sidebar / Header ----------
+// Sidebar / Header 
 function renderSidebar() {
   const items = [
     { id: 'dashboard', label: 'Dashboard', icon: ICONS.dashboard },
@@ -251,7 +307,7 @@ function renderHeader() {
   </header>`;
 }
 
-// ---------- Dashboard ----------
+//Dashboard 
 function renderDashboard() {
   const recs = state.records;
   const open = recs.filter(r => r.status === 'Open').length;
@@ -361,7 +417,7 @@ function drawCharts() {
   }
 }
 
-// ---------- IPQC List / History ----------
+//  IPQC List / History
 function filteredRecords() {
   const f = state.filters;
   return state.records
@@ -496,72 +552,234 @@ function renderIPQCList() {
   </div>`;
 }
 
-// ---------- Add / Edit Audit Form ----------
+// Add / Edit Audit Form 
 function blankAuditRecord() {
   return {
-    auditDate: new Date().toISOString().split('T')[0], shift: 'D', auditors: '', personOnJob: '',
+    auditDate: new Date().toISOString().split('T')[0], shift: 'A', auditors: '', personOnJob: '',
     department: DEPARTMENTS[0], platform: PLATFORMS[0], areaStation: '', groupFinding: '', category: CATEGORIES[0],
     detailsFindings: '', picture: '', remark: '', status: 'Open', icarNum: '', actionTaken: '', mqeEngineer: '',
   };
 }
 
 function auditFormFieldsHtml(r) {
+
   return `
-    ${formSection('When & Who', 'calendar', `
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        ${formInput('auditDate', 'Audit Date', r.auditDate, 'date', true)}
-        ${formSelect('shift', 'Shift', r.shift, SHIFTS)}
-        ${formInput('auditors', 'IPQC Auditor', r.auditors, 'text', true)}
-        ${formInput('personOnJob', 'PIC Finding', r.personOnJob, 'text')}
-      </div>
-    `)}
 
-    ${formSection('Location', 'mapPin', `
-      <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-        ${formSelect('department', 'Department', r.department, DEPARTMENTS, true)}
-        ${formSelect('platform', 'Platform', r.platform, PLATFORMS)}
-        ${formInput('areaStation', 'Area / Station', r.areaStation, 'text')}
-      </div>
-    `)}
+    <div class="grid grid-cols-4 gap-8">
 
-    ${formSection('The Finding', 'tag', `
-      <div class="grid grid-cols-2 gap-4">
-        ${formSelect('category', 'Category', r.category, CATEGORIES)}
-        ${formInput('groupFinding', 'Group Finding', r.groupFinding, 'text')}
-      </div>
-      <div class="mt-4">
-        ${formTextarea('detailsFindings', 'What did you observe?', r.detailsFindings, 3, true)}
-      </div>
-    `)}
+      ${formInput(
+        'auditDate',
+        'Audit Date',
+        r.auditDate,
+        'date',
+        true
+      )}
 
-    ${formSection('Resolution', 'circleCheck', `
-      <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-        ${formSelect('status', 'Status', r.status, STATUSES)}
-        ${formInput('icarNum', 'ICAR Number', r.icarNum, 'text')}
-        ${formInput('mqeEngineer', 'MQE Engineer', r.mqeEngineer, 'text')}
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-        ${formTextarea('actionTaken', 'Action Taken', r.actionTaken, 2)}
-        ${formTextarea('remark', 'Remark', r.remark, 2)}
-      </div>
-    `)}
+      ${formInput(
+        'ww',
+        'Work Week (WW)',
+        calculateWW(r.auditDate),
+        'text'
+      )}
 
-    ${formSection('Evidence Photo', 'camera', `
-      <div class="flex items-center gap-4">
-        <label for="imageInput" class="cursor-pointer shrink-0 w-20 h-20 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 hover:border-brand-orange hover:bg-orange-50/40 transition-colors flex items-center justify-center text-slate-400" id="imageDropZone">
-          ${r.picture
-            ? `<img src="${esc(r.picture)}" class="w-full h-full object-cover rounded-[10px]" />`
-            : `${svgIcon('camera', 'w-5 h-5')}`}
-        </label>
-        <input id="imageInput" type="file" accept="image/*" class="hidden" />
-        <input type="hidden" name="picture" value="${esc(r.picture)}" id="pictureField" />
-        <div class="text-xs">
-          <div class="font-bold text-slate-600">${r.picture ? 'Photo attached' : 'No photo yet'}</div>
-          <div class="text-text-muted mt-0.5">Click the box to ${r.picture ? 'replace it' : 'attach evidence'} — optional but recommended.</div>
+      ${formSelect(
+        'shift',
+        'Shift',
+        r.shift,
+        SHIFTS
+      )}
+
+      ${formSelect(
+        'department',
+        'Department',
+        r.department,
+        DEPARTMENTS,
+        true
+      )}
+
+    </div>
+
+
+    <div class="grid grid-cols-3 gap-8 mt-10">
+
+      ${formSelect(
+        'platform',
+        'Platform',
+        r.platform,
+        PLATFORMS
+      )}
+
+      ${formInput(
+        'areaStation',
+        'Area / Station',
+        r.areaStation,
+        'text',
+        true
+      )}
+
+      ${formSelect(
+        'category',
+        'Category',
+        r.category,
+        CATEGORIES
+      )}
+
+    </div>
+
+
+    <div class="grid grid-cols-3 gap-8 mt-10">
+
+      ${formInput(
+        'auditors',
+        'IPQC Auditor Name',
+        r.auditors,
+        'text',
+        true
+      )}
+
+      ${formInput(
+        'personOnJob',
+        'PIC Name (Finding)',
+        r.personOnJob,
+        'text',
+        true
+      )}
+
+      ${formInput(
+        'icarNum',
+        'ICAR#',
+        r.icarNum || 'N/A'
+      )}
+
+    </div>
+
+
+    <div class="grid grid-cols-2 gap-8 mt-10">
+
+      ${formInput(
+        'groupFinding',
+        'Group Finding',
+        r.groupFinding,
+        'text'
+      )}
+
+      ${formSelect(
+        'status',
+        'Status',
+        r.status,
+        STATUSES
+      )}
+
+    </div>
+
+
+    <div class="grid grid-cols-2 gap-8 mt-10">
+
+      <div>
+
+        ${formTextarea(
+          'detailsFindings',
+          'Finding Details',
+          r.detailsFindings,
+          5,
+          true
+        )}
+
+        <div class="mt-8">
+          ${formTextarea(
+            'actionTaken',
+            'Action Taken',
+            r.actionTaken,
+            4
+          )}
         </div>
+
+        <div class="mt-8">
+          ${formTextarea(
+            'remark',
+            'Remark',
+            r.remark,
+            4
+          )}
+        </div>
+
       </div>
-    `)}
+
+      <div>
+
+        <label
+          class="
+          block
+          mb-4
+          text-[13px]
+          tracking-[0.15em]
+          font-black
+          uppercase
+          text-[#5d7697]
+          "
+        >
+          Audit Evidence Picture
+        </label>
+
+        <label
+          id="imageDropZone"
+          for="imageInput"
+          class="
+          h-[240px]
+          rounded-3xl
+          border-2
+          border-dashed
+          border-slate-300
+          bg-[#f2f5f8]
+          flex
+          flex-col
+          items-center
+          justify-center
+          cursor-pointer
+          hover:border-blue-300
+          "
+        >
+
+          ${
+            r.picture
+              ? `${esc(r.picture)}-full object-cover rounded-3xl"/>`
+              : `
+                <div class="text-center">
+                  <i data-lucide="image" class="w-14 h-14 text-slate-400 mx-auto"></i>
+
+                  <div class="font-black text-slate-600 uppercase mt-4">
+                    Drag & Drop or Click to Upload
+                  </div>
+
+                  <div class="text-slate-400 text-sm mt-2">
+                    Supports JPG, PNG, WEBP
+                  </div>
+                </div>
+              `
+          }
+
+        </label>
+
+        <input
+          id="imageInput"
+          type="file"
+          accept="image/*"
+          class="hidden"
+        />
+
+        <input
+          type="hidden"
+          name="picture"
+          value="${esc(r.picture)}"
+          id="pictureField"
+        />
+
+      </div>
+
+    </div>
+
   `;
+
 }
 
 function renderAddAuditForm() {
@@ -569,22 +787,60 @@ function renderAddAuditForm() {
   const isEdit = !!state.editingRecord;
 
   return `
-  <div class="max-w-3xl fade-in pb-8">
-    <div class="mb-5">
-      <div class="text-lg font-black text-slate-900">${isEdit ? 'Edit Audit Record' : 'New Audit Record'}</div>
-      <div class="text-xs text-text-muted mt-1">${isEdit ? `Updating record #${esc(r.no)}.` : 'Fill in what you observed on the floor — you can always edit it later.'}</div>
-    </div>
+  <div class="fade-in">
+    <div class="bg-[#f7f9fc] border border-slate-200 rounded-2xl overflow-hidden">
 
-    <form id="auditForm" class="space-y-4">
-      ${auditFormFieldsHtml(r)}
-      <div class="flex gap-3 pt-3 pb-1">
-        <button type="submit" class="flex items-center gap-2 px-5 py-2.5 bg-brand-orange hover:bg-orange-600 text-white text-xs font-black uppercase tracking-widest rounded-lg shadow-sm transition-colors">
-          ${svgIcon('save', 'w-3.5 h-3.5')} ${isEdit ? 'Save Changes' : 'Submit Audit'}
-        </button>
-        <button type="button" data-nav="ipqc" class="px-5 py-2.5 bg-white border border-border-subtle hover:bg-slate-50 text-slate-600 text-xs font-black uppercase tracking-widest rounded-lg transition-colors">Cancel</button>
+      <div class="px-10 py-8 border-b border-slate-200">
+        <div class="flex justify-between items-start">
+
+          <div>
+            <h1 class="text-4xl font-black text-slate-900">
+              ${isEdit ? 'Edit Audit Entry' : 'New Audit Entry'}
+            </h1>
+
+            <div class="mt-2 text-sm tracking-[0.2em] uppercase font-bold text-[#5d7697]">
+              Semicore Quality Management System
+            </div>
+          </div>
+
+          <button
+            data-nav="ipqc"
+            class="text-slate-500 hover:text-slate-800 text-sm font-bold uppercase"
+          >
+            ✕ Exit
+          </button>
+
+        </div>
       </div>
-    </form>
-  </div>`;
+
+      <form id="auditForm" class="p-10">
+
+        ${auditFormFieldsHtml(r)}
+
+        <div class="mt-10 flex gap-3">
+
+          <button
+            type="submit"
+            class="px-8 py-4 bg-[#0f172a] hover:bg-slate-800 text-white rounded-xl font-bold"
+          >
+            ${isEdit ? 'Save Changes' : 'Submit Audit'}
+          </button>
+
+          <button
+            type="button"
+            data-nav="ipqc"
+            class="px-8 py-4 border border-slate-300 rounded-xl font-bold"
+          >
+            Cancel
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+  `;
 }
 
 function formSection(title, iconKey, innerHtml) {
@@ -600,30 +856,197 @@ function formSection(title, iconKey, innerHtml) {
   </div>`;
 }
 
-function formInput(name, label, value, type = 'text', required = false) {
-  return `<div>
-    <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] block mb-2">${esc(label)} ${required ? '<span class="text-rose-500">*</span>' : ''}</label>
-    <input name="${name}" type="${type}" value="${esc(value)}" ${required ? 'required' : ''}
-      class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:border-brand-orange focus:bg-white focus:ring-2 focus:ring-orange-100 transition-all" />
-  </div>`;
+function formInput(
+  name,
+  label,
+  value,
+  type = 'text',
+  required = false
+) {
+
+  return `
+  <div>
+
+    <label
+      class="
+      flex
+      items-center
+      gap-2
+      mb-3
+      text-[13px]
+      tracking-[0.15em]
+      uppercase
+      font-black
+      text-[#5d7697]
+      "
+    >
+      ${label}
+
+      ${
+        required
+          ? `
+            <span class="
+              text-[10px]
+              px-2
+              py-1
+              rounded-md
+              bg-red-100
+              text-red-500
+            ">
+              REQUIRED
+            </span>
+          `
+          : ''
+      }
+    </label>
+
+    <input
+      name="${name}"
+      type="${type}"
+      value="${esc(value)}"
+      ${required ? 'required' : ''}
+      class="
+      w-full
+      h-16
+      px-6
+      rounded-2xl
+      bg-[#f2f5f8]
+      border
+      border-slate-300
+      text-xl
+      font-medium
+      text-slate-900
+      focus:outline-none
+      focus:border-blue-400
+      "
+    />
+
+  </div>
+  `;
 }
-function formSelect(name, label, value, options, required = false) {
-  return `<div>
-    <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] block mb-2">${esc(label)} ${required ? '<span class="text-rose-500">*</span>' : ''}</label>
-    <select name="${name}" ${required ? 'required' : ''} class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:border-brand-orange focus:bg-white focus:ring-2 focus:ring-orange-100 transition-all">
-      ${options.map(o => `<option value="${esc(o)}" ${value === o ? 'selected' : ''}>${esc(o)}</option>`).join('')}
+function formSelect(
+  name,
+  label,
+  value,
+  options,
+  required = false
+) {
+
+  return `
+  <div>
+
+    <label
+      class="
+      flex
+      items-center
+      gap-2
+      mb-3
+      text-[13px]
+      tracking-[0.15em]
+      uppercase
+      font-black
+      text-[#5d7697]
+      "
+    >
+      ${label}
+
+      ${
+        required
+          ? `
+            <span class="
+              text-[10px]
+              px-2
+              py-1
+              rounded-md
+              bg-red-100
+              text-red-500
+            ">
+              REQUIRED
+            </span>
+          `
+          : ''
+      }
+    </label>
+
+    <select
+      name="${name}"
+      ${required ? 'required' : ''}
+      class="
+      w-full
+      h-16
+      px-6
+      rounded-2xl
+      bg-[#f2f5f8]
+      border
+      border-slate-300
+      text-xl
+      font-medium
+      text-slate-900
+      focus:outline-none
+      focus:border-blue-400
+      "
+    >
+      ${options.map(o => `
+        <option
+          value="${esc(o)}"
+          ${value === o ? 'selected' : ''}
+        >
+          ${esc(o)}
+        </option>
+      `).join('')}
     </select>
-  </div>`;
+
+  </div>
+  `;
 }
-function formTextarea(name, label, value, rows = 3, required = false) {
-  return `<div>
-    <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.15em] block mb-2">${esc(label)} ${required ? '<span class="text-rose-500">*</span>' : ''}</label>
-    <textarea name="${name}" rows="${rows}" ${required ? 'required' : ''}
-      class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-brand-orange focus:bg-white focus:ring-2 focus:ring-orange-100 transition-all resize-none">${esc(value)}</textarea>
-  </div>`;
+function formTextarea(
+  name,
+  label,
+  value,
+  rows = 4,
+  required = false
+) {
+
+  return `
+  <div>
+
+    <label
+      class="
+      block
+      mb-3
+      text-[13px]
+      tracking-[0.15em]
+      uppercase
+      font-black
+      text-[#5d7697]
+      "
+    >
+      ${label}
+    </label>
+
+    <textarea
+      name="${name}"
+      rows="${rows}"
+      ${required ? 'required' : ''}
+      class="
+      w-full
+      rounded-2xl
+      p-6
+      bg-[#f2f5f8]
+      border
+      border-slate-300
+      text-lg
+      resize-none
+      focus:outline-none
+      focus:border-blue-400
+      "
+    >${esc(value)}</textarea>
+
+  </div>
+  `;
 }
 
-// ---------- Settings ----------
+// Settings
 function renderSettings() {
   return `
   <div class="max-w-xl space-y-4 fade-in">
@@ -643,7 +1066,7 @@ function renderSettings() {
   </div>`;
 }
 
-// ---------- Image Lightbox ----------
+// Image Lightbox 
 function renderImageLightbox() {
   return `
   <div id="lightboxOverlay" class="fixed inset-0 bg-black/80 z-[90] flex items-center justify-center p-6">
@@ -652,7 +1075,7 @@ function renderImageLightbox() {
   </div>`;
 }
 
-// ---------- Event binding ----------
+//Event binding 
 function bindEvents() {
   document.querySelectorAll('[data-nav]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -726,6 +1149,7 @@ function bindEvents() {
     e.preventDefault();
     const fd = new FormData(form);
     const payload = Object.fromEntries(fd.entries());
+    payload.ww = calculateWW(payload.auditDate);
     if (!payload.mqeEngineer) payload.mqeEngineer = PLATFORM_MQE_MAPPING[payload.platform] || '';
     try {
       let savedRecord;
@@ -761,5 +1185,5 @@ function bindEvents() {
   });
 }
 
-// ---------- Init ----------
+// Init 
 loadRecords();
