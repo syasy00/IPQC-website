@@ -565,7 +565,7 @@ function auditFormFieldsHtml(r) {
 
   return `
 
-    <div class="grid grid-cols-4 gap-8">
+    <div class="grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-5">
 
       ${formInput(
         'auditDate',
@@ -600,7 +600,7 @@ function auditFormFieldsHtml(r) {
     </div>
 
 
-    <div class="grid grid-cols-3 gap-8 mt-10">
+    <div class="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-5 mt-6">
 
       ${formSelect(
         'platform',
@@ -627,7 +627,7 @@ function auditFormFieldsHtml(r) {
     </div>
 
 
-    <div class="grid grid-cols-3 gap-8 mt-10">
+    <div class="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-5 mt-6">
 
       ${formInput(
         'auditors',
@@ -654,7 +654,7 @@ function auditFormFieldsHtml(r) {
     </div>
 
 
-    <div class="grid grid-cols-2 gap-8 mt-10">
+    <div class="grid lg:grid-cols-2 grid-cols-1 gap-5 mt-6">
 
       ${formInput(
         'groupFinding',
@@ -673,7 +673,7 @@ function auditFormFieldsHtml(r) {
     </div>
 
 
-    <div class="grid grid-cols-2 gap-8 mt-10">
+    <div class="grid lg:grid-cols-2 grid-cols-1 gap-5 mt-6">
 
       <div>
 
@@ -711,8 +711,8 @@ function auditFormFieldsHtml(r) {
           class="
           block
           mb-4
-          text-[13px]
-          tracking-[0.15em]
+          text-[11px]
+          tracking-[0.12em]
           font-black
           uppercase
           text-[#5d7697]
@@ -725,7 +725,7 @@ function auditFormFieldsHtml(r) {
           id="imageDropZone"
           for="imageInput"
           class="
-          h-[240px]
+          h-[180px]
           rounded-3xl
           border-2
           border-dashed
@@ -787,14 +787,14 @@ function renderAddAuditForm() {
   const isEdit = !!state.editingRecord;
 
   return `
-  <div class="fade-in">
+  <div class="fade-in max-w-6xl mx-auto">
     <div class="bg-[#f7f9fc] border border-slate-200 rounded-2xl overflow-hidden">
 
-      <div class="px-10 py-8 border-b border-slate-200">
+      <div class="px-6 py-6 border-b border-slate-200">
         <div class="flex justify-between items-start">
 
           <div>
-            <h1 class="text-4xl font-black text-slate-900">
+            <h1 class="text-3xl font-black text-slate-900">
               ${isEdit ? 'Edit Audit Entry' : 'New Audit Entry'}
             </h1>
 
@@ -813,15 +813,15 @@ function renderAddAuditForm() {
         </div>
       </div>
 
-      <form id="auditForm" class="p-10">
+      <form id="auditForm" class="p-6">
 
         ${auditFormFieldsHtml(r)}
 
-        <div class="mt-10 flex gap-3">
+        <div class="mt-6 flex gap-3">
 
           <button
             type="submit"
-            class="px-8 py-4 bg-[#0f172a] hover:bg-slate-800 text-white rounded-xl font-bold"
+            class="px-6 py-3 bg-[#0f172a] hover:bg-slate-800 text-white rounded-xl font-bold"
           >
             ${isEdit ? 'Save Changes' : 'Submit Audit'}
           </button>
@@ -829,7 +829,7 @@ function renderAddAuditForm() {
           <button
             type="button"
             data-nav="ipqc"
-            class="px-8 py-4 border border-slate-300 rounded-xl font-bold"
+            class="px-6 py-3 border border-slate-300 rounded-xl font-bold"
           >
             Cancel
           </button>
@@ -873,8 +873,8 @@ function formInput(
       items-center
       gap-2
       mb-3
-      text-[13px]
-      tracking-[0.15em]
+      text-[11px]
+      tracking-[0.12em]
       uppercase
       font-black
       text-[#5d7697]
@@ -886,9 +886,9 @@ function formInput(
         required
           ? `
             <span class="
-              text-[10px]
-              px-2
-              py-1
+              text-[9px]
+              px-1.5
+              py-0.5
               rounded-md
               bg-red-100
               text-red-500
@@ -907,13 +907,13 @@ function formInput(
       ${required ? 'required' : ''}
       class="
       w-full
-      h-16
-      px-6
+      h-12
+      px-4
       rounded-2xl
       bg-[#f2f5f8]
       border
       border-slate-300
-      text-xl
+      text-base
       font-medium
       text-slate-900
       focus:outline-none
@@ -941,8 +941,8 @@ function formSelect(
       items-center
       gap-2
       mb-3
-      text-[13px]
-      tracking-[0.15em]
+      text-[11px]
+      tracking-[0.12em]
       uppercase
       font-black
       text-[#5d7697]
@@ -954,9 +954,9 @@ function formSelect(
         required
           ? `
             <span class="
-              text-[10px]
-              px-2
-              py-1
+              text-[9px]
+              px-1.5
+              py-0.5
               rounded-md
               bg-red-100
               text-red-500
@@ -973,13 +973,13 @@ function formSelect(
       ${required ? 'required' : ''}
       class="
       w-full
-      h-16
-      px-6
+      h-12
+      px-4
       rounded-2xl
       bg-[#f2f5f8]
       border
       border-slate-300
-      text-xl
+      text-base
       font-medium
       text-slate-900
       focus:outline-none
@@ -1014,8 +1014,8 @@ function formTextarea(
       class="
       block
       mb-3
-      text-[13px]
-      tracking-[0.15em]
+      text-[11px]
+      tracking-[0.12em]
       uppercase
       font-black
       text-[#5d7697]
@@ -1031,11 +1031,11 @@ function formTextarea(
       class="
       w-full
       rounded-2xl
-      p-6
+      p-4
       bg-[#f2f5f8]
       border
       border-slate-300
-      text-lg
+      text-sm
       resize-none
       focus:outline-none
       focus:border-blue-400
