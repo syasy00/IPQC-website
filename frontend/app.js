@@ -259,11 +259,18 @@ function renderError() {
 
 function renderCurrentView() {
   switch (state.view) {
-    case 'dashboard': return renderDashboard();
-    case 'ipqc': return renderIPQCList();
-    case 'add-audit': return renderAddAuditForm();
-    case 'settings': return renderSettings();
-    default: return renderDashboard();
+    case 'dashboard':
+      return renderDashboard();
+    case 'ipqc':
+      return renderIPQCList();
+    case 'add-audit':
+      return renderAddAuditForm();
+    case 'import':
+      return renderImportPage();
+    case 'settings':
+      return renderSettings();
+    default:
+      return renderDashboard();
   }
 }
 
@@ -273,6 +280,7 @@ function renderSidebar() {
     { id: 'dashboard', label: 'Dashboard', icon: ICONS.dashboard },
     { id: 'add-audit', label: 'Add Finding', icon: ICONS.add },
     { id: 'ipqc', label: 'IPQC Records', icon: ICONS.ipqc },
+    { id: 'import', label: 'Import Excel', icon: 'upload' },
     { id: 'settings', label: 'Settings', icon: ICONS.settings },
   ];
   return `
@@ -1047,6 +1055,35 @@ function formTextarea(
       focus:border-blue-400
       "
     >${esc(value)}</textarea>
+
+  </div>
+  `;
+}
+function renderImportPage() {
+  return `
+  <div class="max-w-xl">
+
+    <div class="bg-white p-6 rounded-xl border">
+
+      <h2 class="text-xl font-bold mb-4">
+        Import Historical Records
+      </h2>
+
+      <input
+        id="excelImport"
+        type="file"
+        accept=".xlsx"
+        class="mb-4"
+      />
+
+      <button
+        id="importBtn"
+        class="px-4 py-2 bg-brand-orange text-white rounded-lg"
+      >
+        Import Excel
+      </button>
+
+    </div>
 
   </div>
   `;
