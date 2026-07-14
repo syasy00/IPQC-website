@@ -115,22 +115,46 @@ async function appendRecord(record) {
 async function updateRecord(id, patch) {
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.readFile(DATA_FILE);
+
   const sheet = workbook.getWorksheet(SHEET_NAME);
+
   let updated = null;
+
   sheet.eachRow((row, rowNumber) => {
+
     if (rowNumber === 1) return;
+
     if (String(row.getCell(1).value) === String(id)) {
+
+      // Preserve ID
+      patch.id = String(id);
+
+      // Preserve No
+      if (!patch.no) {
+        patch.no = row.getCell(2).value;
+      }
+
       COLUMNS.forEach((col, idx) => {
-        if (patch[col.key] !== undefined) row.getCell(idx + 1).value = patch[col.key];
+        if (patch[col.key] !== undefined) {
+          row.getCell(idx + 1).value = patch[col.key];
+        }
       });
+
       updated = {};
-      COLUMNS.forEach((col, idx) => { updated[col.key] = row.getCell(idx + 1).value; });
+
+      COLUMNS.forEach((col, idx) => {
+        updated[col.key] = row.getCell(idx + 1).value;
+      });
     }
+
   });
-  if (updated) await workbook.xlsx.writeFile(DATA_FILE);
+
+  if (updated) {
+    await workbook.xlsx.writeFile(DATA_FILE);
+  }
+
   return updated;
 }
-
 async function deleteRecord(id) {
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.readFile(DATA_FILE);
@@ -255,3 +279,4 @@ app.get('/api/health', (req, res) => res.json({ ok: true }));
 ensureWorkbook().then(() => {
   app.listen(PORT, () => console.log(`IPQC backend running on port ${PORT}`));
 });
+
