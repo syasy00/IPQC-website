@@ -70,22 +70,43 @@ app.use(express.json({ limit: '5mb' }));
 // ---------- Excel helpers ----------
 async function ensureWorkbook() {
   if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.mkdirSync(DATA_DIR, {
+      recursive: true
+    });
   }
   if (!fs.existsSync(UPLOADS_DIR)) {
-    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+    fs.mkdirSync(UPLOADS_DIR, {
+      recursive: true
+    });
+  }
+  const IMPORTS_DIR = path.join(
+    DATA_DIR,
+    'imports'
+  );
+  if (!fs.existsSync(IMPORTS_DIR)) {
+    fs.mkdirSync(IMPORTS_DIR, {
+      recursive: true
+    });
   }
   if (fs.existsSync(DATA_FILE)) {
     return;
   }
-  const workbook = new ExcelJS.Workbook();
-  const sheet = workbook.addWorksheet(SHEET_NAME);
+  const workbook =
+    new ExcelJS.Workbook();
+  const sheet =
+    workbook.addWorksheet(
+      SHEET_NAME
+    );
   sheet.columns = COLUMNS;
   sheet.getRow(1).font = {
     bold: true
   };
-  await workbook.xlsx.writeFile(DATA_FILE);
-  console.log('Created empty workbook');
+  await workbook.xlsx.writeFile(
+    DATA_FILE
+  );
+  console.log(
+    'Created empty workbook'
+  );
 }
 
 app.post(
