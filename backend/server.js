@@ -383,3 +383,21 @@ app.get('/api/debug', async (req, res) => {
     });
   }
 });
+
+app.get('/api/test-write', async (req, res) => {
+
+  fs.writeFileSync(
+    path.join(DATA_DIR, 'test.txt'),
+    new Date().toISOString()
+  );
+
+  const content = fs.readFileSync(
+    path.join(DATA_DIR, 'test.txt'),
+    'utf8'
+  );
+
+  res.json({
+    content
+  });
+
+});
