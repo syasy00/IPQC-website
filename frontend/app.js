@@ -1145,31 +1145,94 @@ function bindEvents() {
 
   // form submit
   const form = document.getElementById('auditForm');
-  if (form) form.addEventListener('submit', async (e) => {
+
+if (form) {
+  form.addEventListener('submit', async (e) => {
+
     e.preventDefault();
+
     const fd = new FormData(form);
     const payload = Object.fromEntries(fd.entries());
+
+    // Auto WW
     payload.ww = calculateWW(payload.auditDate);
-    if (!payload.mqeEngineer) payload.mqeEngineer = PLATFORM_MQE_MAPPING[payload.platform] || '';
+
+    // IMPORTANT:
+    // Preserve ID and No during edit
+    if (state.editingRecord) {
+      payload.id = state.editingRecord.id;
+      payload.no = state.editingRecord.no;
+    }
+
+    if (!payload.mqeEngineer) {
+      payload.mqeEngineer =
+        PLATFORM_MQE_MAPPING[payload.platform] || '';
+    }
+
     try {
+
       let savedRecord;
+
       if (state.editingRecord) {
-        savedRecord = await api.update(state.editingRecord.id, payload);
-        state.records = state.records.map(r => String(r.id) === String(savedRecord.id) ? savedRecord : r);
+
+        console.log('Editing:', state.editingRecord.id);
+        console.log('Payload:', payload);
+
+        savedRecord = await api.update(
+          state.editingRecord.id,
+          payload
+        );
+
+        console.log('Updated:', savedRecord);
+
+        state.records = state.records.map(r =>
+          String(r.id) === String(savedRecord.id)
+            ? savedRecord
+            : r
+        );
+
         toast('Record updated');
+
       } else {
+
         savedRecord = await api.create(payload);
+
         state.records.push(savedRecord);
+
         toast('Audit submitted');
       }
-      state.editingRecord = null;
-      state.view = 'ipqc';
-      state.highlightId = savedRecord.id;
-      render();
-      setTimeout(() => { state.highlightId = null; render(); }, 2000);
-    } catch (err) { toast(err.message, true); }
-  });
 
+      state.editingRecord = null;
+
+      // Clear filters
+      state.filters = {
+        search: '',
+        department: '',
+        category: '',
+        status: ''
+      };
+
+      state.view = 'ipqc';
+
+      state.highlightId = savedRecord.id;
+
+      render();
+
+      setTimeout(() => {
+        state.highlightId = null;
+        render();
+      }, 2000);
+
+    } catch (err) {
+
+      console.error(err);
+
+      toast(err.message, true);
+
+    }
+
+  });
+}
   // settings
   const healthBtn = document.getElementById('healthCheckBtn');
   if (healthBtn) healthBtn.addEventListener('click', async () => {
