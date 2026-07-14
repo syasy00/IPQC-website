@@ -721,44 +721,50 @@ function auditFormFieldsHtml(r) {
           Audit Evidence Picture
         </label>
 
-        <label
-          id="imageDropZone"
-          for="imageInput"
-          class="
-          h-[180px]
-          rounded-3xl
-          border-2
-          border-dashed
-          border-slate-300
-          bg-[#f2f5f8]
-          flex
-          flex-col
-          items-center
-          justify-center
-          cursor-pointer
-          hover:border-blue-300
-          "
-        >
+<label
+  id="imageDropZone"
+  for="imageInput"
+  class="
+  h-[180px]
+  rounded-3xl
+  border-2
+  border-dashed
+  border-slate-300
+  bg-[#f2f5f8]
+  flex
+  flex-col
+  items-center
+  justify-center
+  cursor-pointer
+  hover:border-blue-300
+  "
+>
 
-          ${
-            r.picture
-              ? `${esc(r.picture)}-full object-cover rounded-3xl"/>`
-              : `
-                <div class="text-center">
-                  <i data-lucide="image" class="w-14 h-14 text-slate-400 mx-auto"></i>
+${
+  r.picture
+    ? `
+      <img
+        src="${esc(r.picture)}"
+   ded-3xl"
+      />
+    `
+    : `
+      <div class="text-center">
+        <i data-lucide="image" class="w-14 h-14 text-slate-400 mx-auto"></i>
 
-                  <div class="font-black text-slate-600 uppercase mt-4">
-                    Drag & Drop or Click to Upload
-                  </div>
+        <div class="font-black text-slate-600 uppercase mt-4">
+          Drag & Drop or Click to Upload
+        </div>
 
-                  <div class="text-slate-400 text-sm mt-2">
-                    Supports JPG, PNG, WEBP
-                  </div>
-                </div>
-              `
-          }
+        <div class="text-slate-400 text-sm mt-2">
+          Supports JPG, PNG, WEBP
+        </div>
+      </div>
+    `
+}
+  }
 
-        </label>
+</label>
 
         <input
           id="imageInput"
