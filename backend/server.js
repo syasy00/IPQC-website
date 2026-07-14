@@ -109,19 +109,37 @@ async function appendRecord(record) {
   console.log('DATA FILE:', DATA_FILE);
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.readFile(DATA_FILE);
+  console.log(
+    'SHEETS:',
+    workbook.worksheets.map(w => w.name)
+  );
   const sheet = workbook.getWorksheet(SHEET_NAME);
+  console.log(
+    'USING SHEET:',
+    sheet ? sheet.name : 'NOT FOUND'
+  );
+  if (!sheet) {
+    throw new Error(`Worksheet "${SHEET_NAME}" not found`);
+  }
   console.log('ROW COUNT BEFORE:', sheet.rowCount);
-  sheet.addRow(record);
+  const row = sheet.addRow(record);
+  if (typeof row.commit === 'function') {
+    row.commit();
+  }
   console.log('ROW COUNT AFTER:', sheet.rowCount);
   await workbook.xlsx.writeFile(DATA_FILE);
   console.log('EXCEL SAVED');
   const verifyWorkbook = new ExcelJS.Workbook();
   await verifyWorkbook.xlsx.readFile(DATA_FILE);
+  console.log(
+    'VERIFY SHEETS:',
+    verifyWorkbook.worksheets.map(w => w.name)
+  );
   const verifySheet =
     verifyWorkbook.getWorksheet(SHEET_NAME);
   console.log(
     'ROW COUNT VERIFY:',
-    verifySheet.rowCount
+    verifySheet ? verifySheet.rowCount : 'NOT FOUND'
   );
   console.log('========== APPEND END ==========');
 }
