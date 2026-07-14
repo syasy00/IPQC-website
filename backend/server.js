@@ -105,43 +105,46 @@ async function readAllRecords() {
 }
 
 async function appendRecord(record) {
-  console.log('========== APPEND START ==========');
-  console.log('DATA FILE:', DATA_FILE);
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.readFile(DATA_FILE);
-  console.log(
-    'SHEETS:',
-    workbook.worksheets.map(w => w.name)
-  );
   const sheet = workbook.getWorksheet(SHEET_NAME);
-  console.log(
-    'USING SHEET:',
-    sheet ? sheet.name : 'NOT FOUND'
-  );
   if (!sheet) {
     throw new Error(`Worksheet "${SHEET_NAME}" not found`);
   }
-  console.log('ROW COUNT BEFORE:', sheet.rowCount);
-  const row = sheet.addRow(record);
-  if (typeof row.commit === 'function') {
-    row.commit();
-  }
-  console.log('ROW COUNT AFTER:', sheet.rowCount);
+  console.log("Before Add:", sheet.rowCount);
+  sheet.addRow([
+    record.id,
+    record.no,
+    record.auditDate,
+    record.ww,
+    record.shift,
+    record.auditors,
+    record.personOnJob,
+    record.department,
+    record.platform,
+    record.areaStation,
+    record.groupFinding,
+    record.category,
+    record.detailsFindings,
+    record.picture,
+    record.remark,
+    record.status,
+    record.icarNum,
+    record.actionTaken,
+    record.mqeEngineer
+  ]);
+
+  console.log("After Add:", sheet.rowCount);
   await workbook.xlsx.writeFile(DATA_FILE);
-  console.log('EXCEL SAVED');
+  console.log("Excel Saved");
   const verifyWorkbook = new ExcelJS.Workbook();
   await verifyWorkbook.xlsx.readFile(DATA_FILE);
-  console.log(
-    'VERIFY SHEETS:',
-    verifyWorkbook.worksheets.map(w => w.name)
-  );
   const verifySheet =
     verifyWorkbook.getWorksheet(SHEET_NAME);
   console.log(
-    'ROW COUNT VERIFY:',
-    verifySheet ? verifySheet.rowCount : 'NOT FOUND'
+    "Verify Rows:",
+    verifySheet.rowCount
   );
-  console.log('========== APPEND END ==========');
 }
 
 async function updateRecord(id, patch) {
