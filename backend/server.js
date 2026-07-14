@@ -333,3 +333,26 @@ app.get('/api/health', (req, res) => res.json({ ok: true }));
 ensureWorkbook().then(() => {
   app.listen(PORT, () => console.log(`IPQC backend running on port ${PORT}`));
 });
+
+app.get('/api/debug', async (req, res) => {
+  try {
+
+    const exists = fs.existsSync(DATA_FILE);
+
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.readFile(DATA_FILE);
+
+    const sheet = workbook.getWorksheet(SHEET_NAME);
+
+    res.json({
+      dataFile: DATA_FILE,
+      exists,
+      rows: sheet.rowCount
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      error: err.message
+    });
+  }
+});
