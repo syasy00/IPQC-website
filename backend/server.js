@@ -105,11 +105,16 @@ async function readAllRecords() {
 }
 
 async function appendRecord(record) {
+  console.log('DATA FILE:', DATA_FILE);
+  console.log('RECORD TO SAVE:', record);
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.readFile(DATA_FILE);
   const sheet = workbook.getWorksheet(SHEET_NAME);
+  console.log('Before Add:', sheet.rowCount);
   sheet.addRow(record);
+  console.log('After Add:', sheet.rowCount);
   await workbook.xlsx.writeFile(DATA_FILE);
+  console.log('Excel Saved Successfully');
 }
 
 async function updateRecord(id, patch) {
@@ -225,10 +230,14 @@ app.get('/api/records', async (req, res) => {
 
 app.post('/api/records', async (req, res) => {
   try {
+    console.log('POST BODY:', req.body);
     const body = req.body || {};
     if (!body.auditDate || !body.auditors || !body.department) {
-      return res.status(400).json({ error: 'auditDate, auditors and department are required' });
+      return res.status(400).json({
+        error: 'auditDate, auditors and department are required'
+      });
     }
+
     const { id, no } = await nextIdentity();
     const record = {
       id,
@@ -249,14 +258,23 @@ app.post('/api/records', async (req, res) => {
       status: body.status || 'Open',
       icarNum: body.icarNum || '',
       actionTaken: body.actionTaken || '',
-      mqeEngineer: body.mqeEngineer || PLATFORM_MQE_MAPPING[body.platform] || '',
+      mqeEngineer:
+        body.mqeEngineer ||
+        PLATFORM_MQE_MAPPING[body.platform] ||
+        '',
     };
+
+    console.log('NEW RECORD:', record);
     await appendRecord(record);
     res.status(201).json(record);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to append to Excel data file' });
+    console.error('CREATE ERROR:', err);
+    res.status(500).json({
+      error: 'Failed to append to Excel data file'
+    });
+
   }
+
 });
 
 app.put('/api/records/:id', async (req, res) => {
