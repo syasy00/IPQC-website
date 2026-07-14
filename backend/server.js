@@ -105,16 +105,25 @@ async function readAllRecords() {
 }
 
 async function appendRecord(record) {
+  console.log('========== APPEND START ==========');
   console.log('DATA FILE:', DATA_FILE);
-  console.log('RECORD TO SAVE:', record);
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.readFile(DATA_FILE);
   const sheet = workbook.getWorksheet(SHEET_NAME);
-  console.log('Before Add:', sheet.rowCount);
+  console.log('ROW COUNT BEFORE:', sheet.rowCount);
   sheet.addRow(record);
-  console.log('After Add:', sheet.rowCount);
+  console.log('ROW COUNT AFTER:', sheet.rowCount);
   await workbook.xlsx.writeFile(DATA_FILE);
-  console.log('Excel Saved Successfully');
+  console.log('EXCEL SAVED');
+  const verifyWorkbook = new ExcelJS.Workbook();
+  await verifyWorkbook.xlsx.readFile(DATA_FILE);
+  const verifySheet =
+    verifyWorkbook.getWorksheet(SHEET_NAME);
+  console.log(
+    'ROW COUNT VERIFY:',
+    verifySheet.rowCount
+  );
+  console.log('========== APPEND END ==========');
 }
 
 async function updateRecord(id, patch) {
