@@ -24,6 +24,9 @@ const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'ipqc-tracker.xlsx');
 const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
 const SHEET_NAME = 'IPQC Tracker';
+const excelUpload = multer({
+  dest: path.join(DATA_DIR, 'imports')
+});
 
 const COLUMNS = [
   { header: 'ID', key: 'id', width: 10 },
@@ -60,32 +63,105 @@ function calculateWW(dateStr) {
   return String(weekNo);
 }
 
-const SEED_RECORDS = [
-  { id: '1', no: 1, auditDate: '2026-05-04', ww: calculateWW('2026-05-04'), shift: 'D', auditors: 'Amalina', personOnJob: 'Alleya', department: 'Production Team', platform: 'Apex', areaStation: 'SMT 2', groupFinding: 'Quality', category: 'Tooling_Labeling', detailsFindings: 'Calibration Label damage. Turn on Tools / Equipment', picture: '', remark: 'Calibration Label damage', status: 'Open', icarNum: '', actionTaken: '', mqeEngineer: 'Siti Naimah' },
-  { id: '2', no: 2, auditDate: '2026-05-04', ww: calculateWW('2026-05-04'), shift: 'D', auditors: 'Zulfikri', personOnJob: 'mathanraj', department: 'IE Team', platform: 'Apex', areaStation: 'Workorder Trolley Area', groupFinding: 'Quality', category: 'ESD_Control', detailsFindings: 'No ESD grounding points', picture: '', remark: 'The trolley has no ESD grounding chain (S-CART003M)', status: 'Open', icarNum: '', actionTaken: '', mqeEngineer: 'Siti Naimah' },
-  { id: '3', no: 3, auditDate: '2026-05-05', ww: '18', shift: 'N', auditors: 'Amalina', personOnJob: 'John Doe', department: 'Production Team', platform: 'Navigator', areaStation: 'Assembly Row 4', groupFinding: 'Quality', category: 'Tooling_Labeling', detailsFindings: 'Tool #45 calibration expired.', picture: '', remark: 'Sent to calibration lab', status: 'In Progress', icarNum: 'ICAR-2026-003', actionTaken: 'Tagging and isolation', mqeEngineer: 'Farid' },
-  { id: '4', no: 4, auditDate: '2026-05-05', ww: '18', shift: 'D', auditors: 'Sarah Connor', personOnJob: 'Mike Ross', department: 'Etching', platform: 'PDX', areaStation: 'Etch A-1', groupFinding: 'Hardware', category: 'Safety', detailsFindings: 'Safety guard loose on platform.', picture: '', remark: 'Fixed by maintenance', status: 'Closed', icarNum: 'ICAR-2026-004', actionTaken: 'Bolt replacement and tightening', mqeEngineer: 'Larry' },
-  { id: '5', no: 5, auditDate: '2026-05-06', ww: '18', shift: 'N', auditors: 'Zulfikri', personOnJob: 'Rachel Zane', department: 'Lithography', platform: 'PDX', areaStation: 'Scanner 5', groupFinding: 'Software', category: 'Process', detailsFindings: 'Login error on control software.', picture: '', remark: 'IT notified', status: 'Open', icarNum: '', actionTaken: 'System reboot performed', mqeEngineer: 'Larry' },
-];
 
 app.use(cors());
 app.use(express.json({ limit: '5mb' }));
 
 // ---------- Excel helpers ----------
-
 async function ensureWorkbook() {
-  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-  if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-  if (fs.existsSync(DATA_FILE)) return;
-
-  console.log('No Excel data file found — creating one with seed data:', DATA_FILE);
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+  if (!fs.existsSync(UPLOADS_DIR)) {
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  }
+  if (fs.existsSync(DATA_FILE)) {
+    return;
+  }
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet(SHEET_NAME);
   sheet.columns = COLUMNS;
-  sheet.getRow(1).font = { bold: true };
-  SEED_RECORDS.forEach((r) => sheet.addRow(r));
+  sheet.getRow(1).font = {
+    bold: true
+  };
   await workbook.xlsx.writeFile(DATA_FILE);
+  console.log('Created empty workbook');
 }
+
+app.post(
+  '/api/import',
+  excelUpload.single('file'),
+  async (req, res) => {
+
+    try {
+      const importedBook =
+        new ExcelJS.Workbook();
+      await importedBook.xlsx.readFile(
+        req.file.path
+      );
+      const sourceSheet =
+        importedBook.worksheets[0];
+      const masterBook =
+        new ExcelJS.Workbook();
+      await masterBook.xlsx.readFile(
+        DATA_FILE
+      );
+      const masterSheet =
+        masterBook.getWorksheet(
+          SHEET_NAME
+        );
+      let count = 0;
+      sourceSheet.eachRow(
+        (row, rowNumber) => {
+
+          const firstCell =
+            String(
+              row.getCell(1).value || ''
+            ).trim();
+          if (
+            firstCell === 'No' ||
+            !firstCell
+          ) {
+            return;
+          }
+          count++;
+          masterSheet.addRow([
+            Date.now() + count,
+            count,
+            row.getCell(2).value,
+            row.getCell(3).value,
+            row.getCell(4).value,
+            row.getCell(5).value,
+            row.getCell(6).value,
+            row.getCell(7).value,
+            row.getCell(8).value,
+            row.getCell(9).value,
+            row.getCell(10).value,
+            row.getCell(11).value,
+            row.getCell(12).value,
+            '',
+            row.getCell(14).value,
+            row.getCell(15).value,
+            row.getCell(16).value,
+            '',
+            ''
+          ]);
+        }
+      );
+      await masterBook.xlsx.writeFile(
+        DATA_FILE
+      );
+      res.json({
+        imported: count
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({
+        error: 'Import failed'
+      });
+    }
+  }
+);
 
 async function readAllRecords() {
   const workbook = new ExcelJS.Workbook();
