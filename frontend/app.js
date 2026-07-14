@@ -190,6 +190,24 @@ const api = {
     if (!res.ok) throw new Error('Image upload failed');
     return res.json();
   },
+   async importExcel(file) {
+  const fd = new FormData();
+  fd.append('file', file);
+  const res = await fetch(
+    `${API_BASE}/api/import`,
+    {
+      method: 'POST',
+      body: fd
+    }
+  );
+  if (!res.ok) {
+    throw new Error(
+      (await res.json()).error ||
+      'Import failed'
+    );
+  }
+  return res.json();
+},
 };
 
 async function loadRecords() {
@@ -307,7 +325,13 @@ function renderSidebar() {
 }
 
 function renderHeader() {
-  const titles = { dashboard: 'Dashboard', ipqc: 'IPQC Records', 'add-audit': 'Add Finding', settings: 'Settings' };
+ const titles = {
+  dashboard: 'Dashboard',
+  ipqc: 'IPQC Records',
+  import: 'Import Excel',
+  'add-audit': 'Add Finding',
+  settings: 'Settings'
+};
   return `
   <header class="h-16 shrink-0 bg-white border-b border-border-subtle flex items-center justify-between px-6">
     <h1 class="text-sm font-black text-slate-800 uppercase tracking-wider">${titles[state.view] || ''}</h1>
@@ -1275,6 +1299,50 @@ if (form) {
     }
 
   });
+
+   
+}
+   // Import Excel
+const importBtn = document.getElementById('importBtn');
+if (importBtn) {
+  importBtn.addEventListener(
+    'click',
+    async () => {
+      const fileInput =
+        document.getElementById('excelImport');
+      const file =
+        fileInput?.files?.[0];
+      if (!file) {
+
+        toast(
+          'Please select an Excel file',
+          true
+        );
+        return;
+      }
+      try {
+
+        toast('Importing records...');
+        const result =
+          await api.importExcel(file);
+        toast(
+          `Imported ${result.imported} records`
+        );
+        await loadRecords();
+        state.view = 'ipqc';
+        render();
+      } catch (err) {
+        console.error(err);
+        toast(
+          err.message,
+          true
+        );
+
+      }
+
+    }
+  );
+
 }
   // settings
   const healthBtn = document.getElementById('healthCheckBtn');
