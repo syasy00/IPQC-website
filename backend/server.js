@@ -120,34 +120,45 @@ async function updateRecord(id, patch) {
 
   let updated = null;
 
-  sheet.eachRow((row, rowNumber) => {
+  for (let rowNumber = 2; rowNumber <= sheet.rowCount; rowNumber++) {
 
-    if (rowNumber === 1) return;
+    const row = sheet.getRow(rowNumber);
 
-    if (String(row.getCell(1).value) === String(id)) {
+    const currentId = String(
+      row.getCell(1).value || ''
+    ).trim();
 
-      // Preserve ID
-      patch.id = String(id);
+    if (currentId === String(id).trim()) {
 
-      // Preserve No
+      patch.id = currentId;
+
       if (!patch.no) {
         patch.no = row.getCell(2).value;
       }
 
       COLUMNS.forEach((col, idx) => {
+
         if (patch[col.key] !== undefined) {
-          row.getCell(idx + 1).value = patch[col.key];
+
+          row.getCell(idx + 1).value =
+            patch[col.key];
+
         }
+
       });
 
       updated = {};
 
       COLUMNS.forEach((col, idx) => {
-        updated[col.key] = row.getCell(idx + 1).value;
-      });
-    }
 
-  });
+        updated[col.key] =
+          row.getCell(idx + 1).value;
+
+      });
+
+      break;
+    }
+  }
 
   if (updated) {
     await workbook.xlsx.writeFile(DATA_FILE);
@@ -155,6 +166,7 @@ async function updateRecord(id, patch) {
 
   return updated;
 }
+
 async function deleteRecord(id) {
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.readFile(DATA_FILE);
@@ -248,15 +260,39 @@ app.post('/api/records', async (req, res) => {
 });
 
 app.put('/api/records/:id', async (req, res) => {
+
+  console.log('UPDATE ID:', req.params.id);
+  console.log('UPDATE BODY:', req.body);
+
   try {
-    const updated = await updateRecord(req.params.id, req.body || {});
-    if (!updated) return res.status(404).json({ error: 'Record not found' });
+
+    const updated =
+      await updateRecord(
+        req.params.id,
+        req.body || {}
+      );
+
+    console.log('UPDATED RECORD:', updated);
+
+    if (!updated) {
+      return res.status(404).json({
+        error: 'Record not found'
+      });
+    }
+
     res.json(updated);
+
   } catch (err) {
+
     console.error(err);
-    res.status(500).json({ error: 'Failed to update Excel data file' });
+
+    res.status(500).json({
+      error: 'Failed to update Excel data file'
+    });
   }
+
 });
+
 
 app.delete('/api/records/:id', async (req, res) => {
   try {
@@ -279,4 +315,3 @@ app.get('/api/health', (req, res) => res.json({ ok: true }));
 ensureWorkbook().then(() => {
   app.listen(PORT, () => console.log(`IPQC backend running on port ${PORT}`));
 });
-
