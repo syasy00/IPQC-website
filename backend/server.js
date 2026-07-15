@@ -109,80 +109,111 @@ async function ensureWorkbook() {
   );
 }
 
+function cellText(cell) {
+  const v = cell.value;
+
+  if (v == null) return '';
+
+  if (typeof v === 'object') {
+    if (v.text) return v.text;
+
+    if (v.richText) {
+      return v.richText.map(x => x.text).join('');
+    }
+
+    if (v.result) {
+      return String(v.result);
+    }
+  }
+
+  return String(v);
+}
+
 app.post(
   '/api/import',
   excelUpload.single('file'),
   async (req, res) => {
-
     try {
-      const importedBook =
-        new ExcelJS.Workbook();
-      await importedBook.xlsx.readFile(
-        req.file.path
-      );
-      const sourceSheet =
-        importedBook.worksheets[0];
-      const masterBook =
-        new ExcelJS.Workbook();
-      await masterBook.xlsx.readFile(
-        DATA_FILE
-      );
-      const masterSheet =
-        masterBook.getWorksheet(
-          SHEET_NAME
-        );
-      let count = 0;
-      sourceSheet.eachRow(
-        (row, rowNumber) => {
 
-          const firstCell =
-            String(
-              row.getCell(1).value || ''
-            ).trim();
-          if (
-            firstCell === 'No' ||
-            !firstCell
-          ) {
-            return;
-          }
-          count++;
-          masterSheet.addRow([
-            Date.now() + count,
-            count,
-            row.getCell(2).value,
-            row.getCell(3).value,
-            row.getCell(4).value,
-            row.getCell(5).value,
-            row.getCell(6).value,
-            row.getCell(7).value,
-            row.getCell(8).value,
-            row.getCell(9).value,
-            row.getCell(10).value,
-            row.getCell(11).value,
-            row.getCell(12).value,
-            '',
-            row.getCell(14).value,
-            row.getCell(15).value,
-            row.getCell(16).value,
-            '',
-            ''
-          ]);
-        }
-      );
-      await masterBook.xlsx.writeFile(
-        DATA_FILE
-      );
+      const importedBook = new ExcelJS.Workbook();
+      await importedBook.xlsx.readFile(req.file.path);
+
+      const sourceSheet = importedBook.worksheets[0];
+      const images = sourceSheet.getImages();
+
+console.log(
+  'IMAGES FOUND:',
+  JSON.stringify(images, null, 2)
+);
+
+      const masterBook = new ExcelJS.Workbook();
+      await masterBook.xlsx.readFile(DATA_FILE);
+
+      const masterSheet =
+        masterBook.getWorksheet(SHEET_NAME);
+      const startNo = masterSheet.rowCount;
+
+      let count = 0;
+      
+
+      sourceSheet.eachRow((row, rowNumber) => {
+
+        if (rowNumber === 1) return;
+
+        if (!cellText(row.getCell(1))) return;
+
+        count++;
+
+
+
+masterSheet.addRow([
+  Date.now() + count,                 // ID
+  startNo + count,                 // No
+
+  cellText(row.getCell(1)),           // Date
+  cellText(row.getCell(2)),           // WW
+  cellText(row.getCell(3)),           // Shift
+  cellText(row.getCell(4)),           // Auditor
+  cellText(row.getCell(5)),           // PIC Finding
+  cellText(row.getCell(6)),           // Department
+  cellText(row.getCell(7)),           // Platform
+  cellText(row.getCell(8)),           // Area / Station
+  cellText(row.getCell(9)),           // Group Finding
+  cellText(row.getCell(10)),          // Category
+  cellText(row.getCell(11)),          // Finding Details
+
+  '',                                 // Picture URL
+
+  cellText(row.getCell(13)),          // Remark
+  cellText(row.getCell(14)),          // Status
+  cellText(row.getCell(15)),          // ICAR
+
+  '',                                 // Action Taken
+  ''                                  // MQE Engineer
+]);
+
+        
+      });
+
+      await masterBook.xlsx.writeFile(DATA_FILE);
+
       res.json({
+        success: true,
         imported: count
       });
+
     } catch (err) {
       console.error(err);
+
       res.status(500).json({
-        error: 'Import failed'
+        error: 'Import failed',
+        details: err.message
       });
     }
   }
 );
+
+
 
 async function readAllRecords() {
   const workbook = new ExcelJS.Workbook();
