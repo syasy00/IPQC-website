@@ -139,12 +139,16 @@ app.post(
       await importedBook.xlsx.readFile(req.file.path);
 
       const sourceSheet = importedBook.worksheets[0];
-      const images = sourceSheet.getImages();
+const images = sourceSheet.getImages();
 
-console.log(
-  'IMAGES FOUND:',
-  JSON.stringify(images, null, 2)
-);
+console.log('TOTAL IMAGES:', images.length);
+
+images.forEach((img, index) => {
+  console.log('IMAGE', index + 1, {
+    imageId: img.imageId,
+    range: img.range
+  });
+});
 
       const masterBook = new ExcelJS.Workbook();
       await masterBook.xlsx.readFile(DATA_FILE);
