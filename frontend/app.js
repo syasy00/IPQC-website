@@ -78,6 +78,17 @@ const PLATFORMS = [
   'VHF'
 ];
 
+const CATEGORY_GROUP_MAPPING = {
+  Compliance_6S: 'Method',
+  Calibration_PM: 'Machine',
+  Documentation_And_Process_Adherence: 'Method',
+  ESD_Control: 'Machine',
+  Material_Control_And_Chemical_Management: 'Material',
+  Safety_Concern: 'Man',
+  Tooling_Labeling: 'Material',
+  Training_Certification: 'Man'
+};
+
 const PLATFORM_MQE_MAPPING = {
   Apex: 'Siti Naimah',
   PDX: 'Larry',
@@ -722,12 +733,19 @@ function auditFormFieldsHtml(r) {
 
     <div class="grid lg:grid-cols-2 grid-cols-1 gap-5 mt-6">
 
-      ${formInput(
-        'groupFinding',
-        'Group Finding',
-        r.groupFinding,
-        'text'
-      )}
+      <div>
+        <label class="flex items-center gap-2 mb-3 text-[11px] tracking-[0.12em] uppercase font-black text-[#5d7697]">
+          Group Finding
+        </label>
+        <input
+          name="groupFinding"
+          id="groupFinding"
+          type="text"
+          value="${esc(r.groupFinding)}"
+          readonly
+          class="w-full h-12 px-4 rounded-2xl bg-slate-100 border border-slate-300 text-base font-medium text-slate-700 focus:outline-none"
+        />
+      </div>
 
     </div>
 
@@ -853,10 +871,6 @@ function renderAddAuditForm() {
             <h1 class="text-3xl font-black text-slate-900">
               ${isEdit ? 'Edit Audit Entry' : 'New Audit Entry'}
             </h1>
-
-            <div class="mt-2 text-sm tracking-[0.2em] uppercase font-bold text-[#5d7697]">
-              Semicore Quality Management System
-            </div>
           </div>
 
           <button
@@ -1170,6 +1184,16 @@ function bindEvents() {
     });
   });
 
+  const categoryField = document.querySelector('select[name="category"]');
+  const groupField = document.querySelector('input[name="groupFinding"]');
+  if (categoryField && groupField) {
+    const syncGroupFinding = () => {
+      groupField.value = CATEGORY_GROUP_MAPPING[categoryField.value] || '';
+    };
+    syncGroupFinding();
+    categoryField.addEventListener('change', syncGroupFinding);
+  }
+
   const retryBtn = document.querySelector('[data-action="retry"]');
   if (retryBtn) retryBtn.addEventListener('click', loadRecords);
 
@@ -1238,6 +1262,8 @@ if (form) {
 
     const fd = new FormData(form);
     const payload = Object.fromEntries(fd.entries());
+
+    payload.groupFinding = CATEGORY_GROUP_MAPPING[payload.category] || '';
 
     // Auto WW
     payload.ww = calculateWW(payload.auditDate);
