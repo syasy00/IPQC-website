@@ -44,9 +44,7 @@ const COLUMNS = [
   { header: 'Details Findings', key: 'detailsFindings', width: 40 },
   { header: 'Picture URL', key: 'picture', width: 30 },
   { header: 'Remark', key: 'remark', width: 30 },
-  { header: 'Status', key: 'status', width: 12 },
   { header: 'ICAR No.', key: 'icarNum', width: 16 },
-  { header: 'Action Taken', key: 'actionTaken', width: 30 },
   { header: 'MQE Engineer', key: 'mqeEngineer', width: 16 },
 ];
 
@@ -187,12 +185,8 @@ masterSheet.addRow([
   cellText(row.getCell(11)),          // Finding Details
 
   '',                                 // Picture URL
-
   cellText(row.getCell(13)),          // Remark
-  cellText(row.getCell(14)),          // Status
-  cellText(row.getCell(15)),          // ICAR
-
-  '',                                 // Action Taken
+  cellText(row.getCell(14)),          // ICAR
   ''                                  // MQE Engineer
 ]);
 
@@ -417,9 +411,8 @@ app.post('/api/records', async (req, res) => {
       detailsFindings: body.detailsFindings || '',
       picture: body.picture || '',
       remark: body.remark || '',
-      status: body.status || 'Open',
+      status: 'Open',
       icarNum: body.icarNum || '',
-      actionTaken: body.actionTaken || '',
       mqeEngineer:
         body.mqeEngineer ||
         PLATFORM_MQE_MAPPING[body.platform] ||

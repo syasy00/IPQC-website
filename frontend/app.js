@@ -25,6 +25,34 @@ const CATEGORIES = [
   'Training_Certification'
 ];
 
+const FINDING_DETAILS = [
+  'Visual Standard Expired',
+  'Assembly process conducted without glove usage',
+  'Cable wire damage',
+  'Calibration Label damage, Torn on Tools / Equipment',
+  'Calibration Overdue ESD Monitor',
+  'Calibration Overdue Torque Drive',
+  'Chemical / Material Overdue',
+  'Dust on workstation/rack/ect',
+  'Dustbin located at non-kanban area',
+  'Equipment without Calibration / PM Label',
+  'ESD Monitoring not function',
+  'Improper storage of Kit / Bulk Material',
+  'Improper storage of Tool/Equipment',
+  'Ionizer turn off',
+  'IPA without Expiry Date Label',
+  'Missing Label Expiry Date',
+  'Mix material inside the material bin',
+  'No ESD grounding points',
+  'No Insulative Mat',
+  'No Set-Up Checklist displayed',
+  'Not Wear Safety Glass',
+  'Preventive Maintenance Overdue',
+  'Setup check list not updated',
+  'Torque number is smear',
+  'Unnecessary item/material found on the workstation'
+];
+
 const PLATFORMS = [
   'Apex',
   'Ascent',
@@ -595,7 +623,7 @@ function blankAuditRecord() {
   return {
     auditDate: new Date().toISOString().split('T')[0], shift: 'A', auditors: '', personOnJob: '',
     department: DEPARTMENTS[0], platform: PLATFORMS[0], areaStation: '', groupFinding: '', category: CATEGORIES[0],
-    detailsFindings: '', picture: '', remark: '', status: 'Open', icarNum: '', actionTaken: '', mqeEngineer: '',
+    detailsFindings: '', picture: '', remark: '', icarNum: '', mqeEngineer: '',
   };
 }
 
@@ -701,13 +729,6 @@ function auditFormFieldsHtml(r) {
         'text'
       )}
 
-      ${formSelect(
-        'status',
-        'Status',
-        r.status,
-        STATUSES
-      )}
-
     </div>
 
 
@@ -715,22 +736,13 @@ function auditFormFieldsHtml(r) {
 
       <div>
 
-        ${formTextarea(
+        ${formSelect(
           'detailsFindings',
           'Finding Details',
           r.detailsFindings,
-          5,
+          (r.detailsFindings && !FINDING_DETAILS.includes(r.detailsFindings) ? [r.detailsFindings, ...FINDING_DETAILS] : FINDING_DETAILS),
           true
         )}
-
-        <div class="mt-8">
-          ${formTextarea(
-            'actionTaken',
-            'Action Taken',
-            r.actionTaken,
-            4
-          )}
-        </div>
 
         <div class="mt-8">
           ${formTextarea(
@@ -1297,58 +1309,34 @@ if (form) {
       }, 2000);
 
     } catch (err) {
-
       console.error(err);
-
       toast(err.message, true);
-
     }
-
   });
 
-   
-}
-   // Import Excel
-const importBtn = document.getElementById('importBtn');
-if (importBtn) {
-  importBtn.addEventListener(
-    'click',
-    async () => {
-      const fileInput =
-        document.getElementById('excelImport');
-      const file =
-        fileInput?.files?.[0];
+  // Import Excel
+  const importBtn = document.getElementById('importBtn');
+  if (importBtn) {
+    importBtn.addEventListener('click', async () => {
+      const fileInput = document.getElementById('excelImport');
+      const file = fileInput?.files?.[0];
       if (!file) {
-
-        toast(
-          'Please select an Excel file',
-          true
-        );
+        toast('Please select an Excel file', true);
         return;
       }
       try {
-
         toast('Importing records...');
-        const result =
-          await api.importExcel(file);
-        toast(
-          `Imported ${result.imported} records`
-        );
+        const result = await api.importExcel(file);
+        toast(`Imported ${result.imported} records`);
         await loadRecords();
         state.view = 'ipqc';
         render();
       } catch (err) {
         console.error(err);
-        toast(
-          err.message,
-          true
-        );
-
+        toast(err.message, true);
       }
-
-    }
-  );
-
+    });
+  }
 }
   // settings
   const healthBtn = document.getElementById('healthCheckBtn');

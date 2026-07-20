@@ -36,9 +36,7 @@ const COLUMNS = [
   { header: 'Details Findings', key: 'detailsFindings', width: 40 },
   { header: 'Picture URL', key: 'picture', width: 30 },
   { header: 'Remark', key: 'remark', width: 30 },
-  { header: 'Status', key: 'status', width: 12 },
   { header: 'ICAR No.', key: 'icarNum', width: 16 },
-  { header: 'Action Taken', key: 'actionTaken', width: 30 },
   { header: 'MQE Engineer', key: 'mqeEngineer', width: 16 },
 ];
 
@@ -59,9 +57,7 @@ const HEADER_ALIASES = {
   detailsFindings: ['detailsfindings', 'findingdetails', 'details', 'findings'],
   picture: ['picture', 'pictureurl', 'photo', 'image'],
   remark: ['remark', 'remarks'],
-  status: ['status'],
   icarNum: ['icarnum', 'icarno', 'icarno.', 'icar'],
-  actionTaken: ['actiontaken', 'action'],
   mqeEngineer: ['mqeengineer', 'mqe'],
 };
 
@@ -129,8 +125,7 @@ async function main() {
     const rec = {
       id: '', no: '', auditDate: '', ww: '', shift: 'D', auditors: '', personOnJob: '',
       department: '', platform: '', areaStation: '', groupFinding: '', category: '',
-      detailsFindings: '', picture: '', remark: '', status: 'Open', icarNum: '',
-      actionTaken: '', mqeEngineer: '',
+      detailsFindings: '', picture: '', remark: '', icarNum: '', mqeEngineer: '',
     };
     let hasData = false;
     row.eachCell((cell, colNumber) => {
