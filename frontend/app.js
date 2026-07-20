@@ -643,96 +643,19 @@ function auditFormFieldsHtml(r) {
   return `
 
     <div class="grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-5">
-
-      ${formInput(
-        'auditDate',
-        'Audit Date',
-        r.auditDate,
-        'date',
-        true
-      )}
-
-      ${formInput(
-        'ww',
-        'Work Week (WW)',
-        calculateWW(r.auditDate),
-        'text'
-      )}
-
-      ${formSelect(
-        'shift',
-        'Shift',
-        r.shift,
-        SHIFTS
-      )}
-
-      ${formSelect(
-        'department',
-        'Department',
-        r.department,
-        DEPARTMENTS,
-        true
-      )}
-
+      ${formInput('auditDate', 'Audit Date', r.auditDate, 'date')}
+      ${formInput('ww', 'Work Week (WW)', calculateWW(r.auditDate), 'text')}
+      ${formSelect('shift', 'Shift', r.shift, SHIFTS)}
+      ${formSelect('department', 'Department', r.department, DEPARTMENTS)}
     </div>
 
-
-    <div class="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-5 mt-6">
-
-      ${formSelect(
-        'platform',
-        'Platform',
-        r.platform,
-        PLATFORMS
-      )}
-
-      ${formInput(
-        'areaStation',
-        'Area / Station',
-        r.areaStation,
-        'text',
-        true
-      )}
-
-      ${formSelect(
-        'category',
-        'Category',
-        r.category,
-        CATEGORIES
-      )}
-
+    <div class="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-5 mt-4">
+      ${formSelect('platform', 'Platform', r.platform, PLATFORMS)}
+      ${formInput('areaStation', 'Area / Station', r.areaStation, 'text', true)}
+      ${formSelect('category', 'Category', r.category, CATEGORIES)}
     </div>
 
-
-    <div class="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-5 mt-6">
-
-      ${formInput(
-        'auditors',
-        'IPQC Auditor Name',
-        r.auditors,
-        'text',
-        true
-      )}
-
-      ${formInput(
-        'personOnJob',
-        'PIC Name (Finding)',
-        r.personOnJob,
-        'text',
-        true
-      )}
-
-      ${formInput(
-        'icarNum',
-        'ICAR#',
-        r.icarNum || 'N/A'
-      )}
-
-    </div>
-
-
-    <div class="grid lg:grid-cols-2 grid-cols-1 gap-5 mt-6">
-
+    <div class="grid lg:grid-cols-2 md:grid-cols-2 grid-cols-1 gap-5 mt-4">
       <div>
         <label class="flex items-center gap-2 mb-3 text-[11px] tracking-[0.12em] uppercase font-black text-[#5d7697]">
           Group Finding
@@ -746,114 +669,34 @@ function auditFormFieldsHtml(r) {
           class="w-full h-12 px-4 rounded-2xl bg-slate-100 border border-slate-300 text-base font-medium text-slate-700 focus:outline-none"
         />
       </div>
-
+      ${formSelect('detailsFindings', 'Finding Details', r.detailsFindings, (r.detailsFindings && !FINDING_DETAILS.includes(r.detailsFindings) ? [r.detailsFindings, ...FINDING_DETAILS] : FINDING_DETAILS))}
     </div>
 
-
-    <div class="grid lg:grid-cols-2 grid-cols-1 gap-5 mt-6">
-
-      <div>
-
-        ${formSelect(
-          'detailsFindings',
-          'Finding Details',
-          r.detailsFindings,
-          (r.detailsFindings && !FINDING_DETAILS.includes(r.detailsFindings) ? [r.detailsFindings, ...FINDING_DETAILS] : FINDING_DETAILS),
-          true
-        )}
-
-        <div class="mt-8">
-          ${formTextarea(
-            'remark',
-            'Remark',
-            r.remark,
-            4
-          )}
-        </div>
-
-      </div>
-
-      <div>
-
-        <label
-          class="
-          block
-          mb-4
-          text-[11px]
-          tracking-[0.12em]
-          font-black
-          uppercase
-          text-[#5d7697]
-          "
-        >
-          Audit Evidence Picture
-        </label>
-
-<label
-  id="imageDropZone"
-  for="imageInput"
-  class="
-  h-[180px]
-  rounded-3xl
-  border-2
-  border-dashed
-  border-slate-300
-  bg-[#f2f5f8]
-  flex
-  flex-col
-  items-center
-  justify-center
-  cursor-pointer
-  hover:border-blue-300
-  "
->
-
-${
-  r.picture
-    ? `
-      <img
-        src="${esc(r.picture)}"
-   ded-3xl"
-      />
-    `
-    : `
-      <div class="text-center">
-        <i data-lucide="image" class="w-14 h-14 text-slate-400 mx-auto"></i>
-
-        <div class="font-black text-slate-600 uppercase mt-4">
-          Drag & Drop or Click to Upload
-        </div>
-
-        <div class="text-slate-400 text-sm mt-2">
-          Supports JPG, PNG, WEBP
-        </div>
-      </div>
-    `
-}
-  }
-
-</label>
-
-        <input
-          id="imageInput"
-          type="file"
-          accept="image/*"
-          class="hidden"
-        />
-
-        <input
-          type="hidden"
-          name="picture"
-          value="${esc(r.picture)}"
-          id="pictureField"
-        />
-
-      </div>
-
+    <div class="grid lg:grid-cols-2 md:grid-cols-2 grid-cols-1 gap-5 mt-4">
+      ${formInput('auditors', 'IPQC Auditor Name', r.auditors, 'text')}
+      ${formInput('personOnJob', 'PIC Name (Finding)', r.personOnJob, 'text')}
     </div>
 
+    <div class="grid lg:grid-cols-2 md:grid-cols-2 grid-cols-1 gap-5 mt-4">
+      ${formInput('icarNum', 'ICAR#', r.icarNum || 'N/A')}
+      ${formTextarea('remark', 'Remark', r.remark, 4)}
+    </div>
+
+    <div class="mt-4">
+      <label class="block mb-3 text-[11px] tracking-[0.12em] font-black uppercase text-[#5d7697]">
+        Audit Evidence Picture
+      </label>
+      <label
+        id="imageDropZone"
+        for="imageInput"
+        class="h-[120px] rounded-2xl border-2 border-dashed border-slate-300 bg-[#f2f5f8] flex flex-col items-center justify-center cursor-pointer hover:border-blue-300"
+      >
+        ${r.picture ? `<img src="${esc(r.picture)}" class="w-full h-full object-cover rounded-[10px]" />` : `<div class="text-center"><i data-lucide="image" class="w-14 h-14 text-slate-400 mx-auto"></i><div class="font-black text-slate-600 uppercase mt-4">Drag & Drop or Click to Upload</div><div class="text-slate-400 text-sm mt-2">Supports JPG, PNG, WEBP</div></div>`}
+      </label>
+      <input id="imageInput" type="file" accept="image/*" class="hidden" />
+      <input type="hidden" name="picture" value="${esc(r.picture)}" id="pictureField" />
+    </div>
   `;
-
 }
 
 function renderAddAuditForm() {
