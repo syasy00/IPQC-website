@@ -387,20 +387,22 @@ function renderHeader() {
 //Dashboard 
 function renderDashboard() {
   const recs = state.records;
-  const open = recs.filter(r => r.status === 'Open').length;
-  const inProgress = recs.filter(r => r.status === 'In Progress').length;
-  const closed = recs.filter(r => r.status === 'Closed').length;
+
+  const locked =
+    recs.filter(r => r.icarStatus === 'Locked').length;
+
+  const submitted =
+    recs.filter(r => r.icarStatus === 'Submitted').length;
 
   if (recs.length === 0) return renderEmptyDashboard();
 
   return `
   <div class="space-y-6 fade-in">
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      ${statCard('Total Records', recs.length, ICONS.clipboardList, 'slate')}
-      ${statCard('Open', open, ICONS.circleAlert, 'rose')}
-      ${statCard('In Progress', inProgress, ICONS.clock, 'amber')}
-      ${statCard('Closed', closed, ICONS.circleCheck, 'emerald')}
-    </div>
+  <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+  ${statCard('Total Records', recs.length, ICONS.clipboardList, 'slate')}
+  ${statCard('Locked', locked, ICONS.clock, 'amber')}
+  ${statCard('Submitted', submitted, ICONS.circleCheck, 'emerald')}
+</div>
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <div class="bg-white p-5 rounded-xl border border-border-subtle shadow-sm">
         <div class="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-3">Findings by Department</div>
@@ -461,23 +463,46 @@ function drawCharts() {
   const byDept = {};
   recs.forEach(r => { byDept[r.department || 'Unspecified'] = (byDept[r.department || 'Unspecified'] || 0) + 1; });
   const deptCtx = document.getElementById('chartDept');
-  if (deptCtx) {
-    charts.dept = new Chart(deptCtx, {
-      type: 'bar',
-      data: { labels: Object.keys(byDept), datasets: [{ label: 'Findings', data: Object.values(byDept), backgroundColor: '#F15D22' }] },
-      options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } },
-    });
-  }
+ if (statusCtx) {
+  charts.status = new Chart(statusCtx, {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(byStatus),
+      datasets: [{
+        data: Object.values(byStatus),
+        backgroundColor: [
+          '#f59e0b', // Locked
+          '#10b981'  // Submitted
+        ]
+      }]
+    }
+  });
+}
 
   // status
-  const byStatus = { Open: 0, 'In Progress': 0, Closed: 0 };
-  recs.forEach(r => { if (byStatus[r.status] !== undefined) byStatus[r.status]++; });
+const byStatus = {
+  Locked: 0,
+  Submitted: 0
+};
+
+recs.forEach(r => {
+  if (byStatus[r.icarStatus] !== undefined)
+    byStatus[r.icarStatus]++;
+});
   const statusCtx = document.getElementById('chartStatus');
   if (statusCtx) {
     charts.status = new Chart(statusCtx, {
       type: 'doughnut',
-      data: { labels: Object.keys(byStatus), datasets: [{ data: Object.values(byStatus), backgroundColor: ['#f43f5e', '#f59e0b', '#10b981'] }] },
-    });
+     data: {
+  labels: Object.keys(byStatus),
+  datasets: [{
+    data: Object.values(byStatus),
+    backgroundColor: [
+      '#f59e0b', // Locked
+      '#10b981'  // Submitted
+    ]
+  }]
+}
   }
 
   // trend by WW
@@ -501,7 +526,12 @@ function filteredRecords() {
     .filter(r => {
       if (f.department && r.department !== f.department) return false;
       if (f.category && r.category !== f.category) return false;
-      if (f.status && r.status !== f.status) return false;
+     if (
+  f.status &&
+  r.icarStatus !== f.status
+) {
+  return false;
+}
       if (f.search) {
         const q = f.search.toLowerCase();
         const hay = `${r.auditors} ${r.personOnJob} ${r.detailsFindings} ${r.areaStation} ${r.icarNum}`.toLowerCase();
@@ -515,20 +545,30 @@ function filteredRecords() {
 function renderFilterBar() {
   const f = state.filters;
   const recs = state.records;
-  const counts = {
-    '': recs.length,
-    Open: recs.filter(r => r.status === 'Open').length,
-    'In Progress': recs.filter(r => r.status === 'In Progress').length,
-    Closed: recs.filter(r => r.status === 'Closed').length,
-  };
-  const chipStyle = (s) => s === f.status
-    ? (s === 'Open' ? 'bg-rose-500 text-white' : s === 'In Progress' ? 'bg-amber-500 text-white' : s === 'Closed' ? 'bg-emerald-500 text-white' : 'bg-slate-900 text-white')
-    : 'bg-slate-100 text-slate-500 hover:bg-slate-200';
+ const counts = {
+  '': recs.length,
+  Locked: recs.filter(
+    r => r.icarStatus === 'Locked'
+  ).length,
 
+  Submitted: recs.filter(
+    r => r.icarStatus === 'Submitted'
+  ).length,
+};
+ const chipStyle = (s) =>
+  s === f.status
+    ? (
+        s === 'Locked'
+          ? 'bg-amber-500 text-white'
+          : s === 'Submitted'
+          ? 'bg-emerald-500 text-white'
+          : 'bg-slate-900 text-white'
+      )
+    : 'bg-slate-100 text-slate-500 hover:bg-slate-200';
   return `
   <div class="space-y-3">
     <div class="flex flex-wrap gap-2">
-      ${['', 'Open', 'In Progress', 'Closed'].map(s => `
+      ${['', 'Locked', 'Submitted'].map(s => `
         <button data-status-chip="${s}" class="px-3.5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-colors ${chipStyle(s)}">
           ${s === '' ? 'All' : s} <span class="opacity-70">${counts[s]}</span>
         </button>
@@ -582,8 +622,8 @@ function renderTable(records, { showActions = true } = {}) {
           <th class="text-left px-3 py-3">Department</th>
           <th class="text-left px-3 py-3">Platform</th>
           <th class="text-left px-3 py-3">Findings</th>
-          <th class="text-left px-3 py-3">Status</th>
           <th class="text-left px-3 py-3">ICAR</th>
+          <th class="text-left px-3 py-3">ICAR Status</th>
           <th class="text-left px-3 py-3">Photo</th>
           ${showActions ? '<th class="text-left px-3 py-3">Actions</th>' : ''}
         </tr>
@@ -599,13 +639,22 @@ function renderTable(records, { showActions = true } = {}) {
             <td class="px-3 py-2">${esc(r.department)}</td>
             <td class="px-3 py-2">${esc(r.platform)}</td>
             <td class="px-3 py-2 max-w-[240px] truncate" title="${esc(r.detailsFindings)}">${esc(r.detailsFindings)}</td>
-            <td class="px-3 py-2">
-              <span class="px-2 py-1 rounded-lg text-[9px] font-black uppercase border ${statusBadgeClass(r.status)}">${esc(r.status)}</span>
-            </td>
-            <td class="px-3 py-2">${esc(r.icarNum)}</td>
-            <td class="px-3 py-2">
-              ${r.picture ? `<button data-preview="${esc(r.picture)}" class="text-brand-orange"><i data-lucide="${ICONS.image}"></i></button>` : '—'}
-            </td>
+
+<td class="px-3 py-2">
+  ${esc(r.icarNum)}
+</td>
+
+<td class="px-3 py-2">
+  ${esc(r.icarStatus || 'Locked')}
+</td>
+
+<td class="px-3 py-2">
+  ${r.picture
+    ? `<button data-preview="${esc(r.picture)}" class="text-brand-orange">
+         <i data-lucide="${ICONS.image}"></i>
+       </button>`
+    : '—'}
+</td>
             ${showActions ? `
             <td class="px-3 py-2">
               <div class="flex gap-2">
@@ -632,9 +681,21 @@ function renderIPQCList() {
 // Add / Edit Audit Form 
 function blankAuditRecord() {
   return {
-    auditDate: new Date().toISOString().split('T')[0], shift: 'A', auditors: '', personOnJob: '',
-    department: DEPARTMENTS[0], platform: PLATFORMS[0], areaStation: '', groupFinding: '', category: CATEGORIES[0],
-    detailsFindings: '', picture: '', remark: '', icarNum: '', mqeEngineer: '',
+    auditDate: new Date().toISOString().split('T')[0],
+    shift: 'A',
+    auditors: '',
+    personOnJob: '',
+    department: DEPARTMENTS[0],
+    platform: PLATFORMS[0],
+    areaStation: '',
+    groupFinding: '',
+    category: CATEGORIES[0],
+    detailsFindings: '',
+    picture: '',
+    remark: '',
+    icarNum: '',
+    mqeEngineer: '',
+    icarStatus: 'Locked'
   };
 }
 
@@ -730,24 +791,38 @@ function renderAddAuditForm() {
 
         ${auditFormFieldsHtml(r)}
 
-        <div class="mt-6 flex gap-3">
+       <div class="mt-6 flex gap-3">
 
-          <button
-            type="submit"
-            class="px-6 py-3 bg-[#0f172a] hover:bg-slate-800 text-white rounded-xl font-bold"
-          >
-            ${isEdit ? 'Save Changes' : 'Submit Audit'}
-          </button>
+  ${
+    !isEdit
+      ? `
+        <button
+          type="button"
+          id="lockBtn"
+          class="px-6 py-3 bg-slate-500 hover:bg-slate-600 text-white rounded-xl font-bold"
+        >
+          Lock
+        </button>
+      `
+      : ''
+  }
 
-          <button
-            type="button"
-            data-nav="ipqc"
-            class="px-6 py-3 border border-slate-300 rounded-xl font-bold"
-          >
-            Cancel
-          </button>
+  <button
+    type="submit"
+    class="px-6 py-3 bg-[#0f172a] hover:bg-slate-800 text-white rounded-xl font-bold"
+  >
+    ${isEdit ? 'Save Changes' : 'Submit'}
+  </button>
 
-        </div>
+  <button
+    type="button"
+    data-nav="ipqc"
+    class="px-6 py-3 border border-slate-300 rounded-xl font-bold"
+  >
+    Cancel
+  </button>
+
+</div>
 
       </form>
 
@@ -1097,6 +1172,51 @@ function bindEvents() {
 
   // form submit
   const form = document.getElementById('auditForm');
+  const lockBtn = document.getElementById('lockBtn');
+
+if (lockBtn && form) {
+
+  lockBtn.addEventListener('click', async () => {
+
+    const fd = new FormData(form);
+    const payload = Object.fromEntries(fd.entries());
+
+    payload.groupFinding =
+      CATEGORY_GROUP_MAPPING[payload.category] || '';
+
+    payload.ww =
+      calculateWW(payload.auditDate);
+
+    payload.icarStatus = 'Locked';
+
+    if (!payload.mqeEngineer) {
+      payload.mqeEngineer =
+        PLATFORM_MQE_MAPPING[payload.platform] || '';
+    }
+
+    try {
+
+      const savedRecord =
+        await api.create(payload);
+
+      state.records.push(savedRecord);
+
+      toast('Audit locked');
+
+      state.view = 'ipqc';
+
+      render();
+
+    } catch (err) {
+
+      console.error(err);
+
+      toast(err.message, true);
+    }
+
+  });
+
+}
 
 if (form) {
   form.addEventListener('submit', async (e) => {
@@ -1106,10 +1226,23 @@ if (form) {
     const fd = new FormData(form);
     const payload = Object.fromEntries(fd.entries());
 
-    payload.groupFinding = CATEGORY_GROUP_MAPPING[payload.category] || '';
+payload.groupFinding =
+  CATEGORY_GROUP_MAPPING[payload.category] || '';
 
-    // Auto WW
-    payload.ww = calculateWW(payload.auditDate);
+payload.ww =
+  calculateWW(payload.auditDate);
+
+// determine ICAR status
+if (
+  payload.icarNum &&
+  payload.icarNum.trim() !== '' &&
+  payload.icarNum !== 'N/A'
+) {
+  payload.icarStatus = 'Submitted';
+} else {
+  payload.icarStatus =
+    state.editingRecord?.icarStatus || 'Locked';
+}
 
     // IMPORTANT:
     // Preserve ID and No during edit
