@@ -462,23 +462,7 @@ function drawCharts() {
   // by department
   const byDept = {};
   recs.forEach(r => { byDept[r.department || 'Unspecified'] = (byDept[r.department || 'Unspecified'] || 0) + 1; });
-const statusCtx = document.getElementById('chartStatus');
 
-if (statusCtx) {
-  charts.status = new Chart(statusCtx, {
-    type: 'doughnut',
-    data: {
-      labels: Object.keys(byStatus),
-      datasets: [{
-        data: Object.values(byStatus),
-        backgroundColor: [
-          '#f59e0b',
-          '#10b981'
-        ]
-      }]
-    }
-  });
-}
 
   // status
 const byStatus = {
