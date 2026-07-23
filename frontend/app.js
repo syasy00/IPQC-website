@@ -462,8 +462,9 @@ function drawCharts() {
   // by department
   const byDept = {};
   recs.forEach(r => { byDept[r.department || 'Unspecified'] = (byDept[r.department || 'Unspecified'] || 0) + 1; });
-  const deptCtx = document.getElementById('chartDept');
- if (statusCtx) {
+const statusCtx = document.getElementById('chartStatus');
+
+if (statusCtx) {
   charts.status = new Chart(statusCtx, {
     type: 'doughnut',
     data: {
@@ -471,8 +472,8 @@ function drawCharts() {
       datasets: [{
         data: Object.values(byStatus),
         backgroundColor: [
-          '#f59e0b', // Locked
-          '#10b981'  // Submitted
+          '#f59e0b',
+          '#10b981'
         ]
       }]
     }
