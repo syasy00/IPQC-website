@@ -1219,6 +1219,31 @@ function bindEvents() {
 
   // form submit
   const form = document.getElementById('auditForm');
+    const icarInput =
+  document.querySelector('input[name="icarNum"]');
+
+const icarStatus =
+  document.querySelector('select[name="icarStatus"]');
+
+if (icarInput && icarStatus) {
+
+  icarInput.addEventListener('input', () => {
+
+    const value =
+      icarInput.value.trim();
+
+    if (
+      value &&
+      value !== 'N/A'
+    ) {
+      icarStatus.value = 'Submitted';
+    } else {
+      icarStatus.value = 'Locked';
+    }
+
+  });
+
+}
  
 if (form) {
   form.addEventListener('submit', async (e) => {
