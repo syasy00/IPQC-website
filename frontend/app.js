@@ -1302,38 +1302,37 @@ if (
         PLATFORM_MQE_MAPPING[payload.platform] || '';
     }
 
-    try {
+try {
 
-      let savedRecord;
+  let savedRecord;
 
-      if (state.editingRecord) {
+  if (state.editingRecord) {
 
-        console.log('Editing:', state.editingRecord.id);
-        console.log('Payload:', payload);
+    console.log('UPDATE MODE', state.editingRecord);
 
-        savedRecord = await api.update(
-          state.editingRecord.id,
-          payload
-        );
+    savedRecord = await api.update(
+      state.editingRecord.id,
+      payload
+    );
 
-        console.log('Updated:', savedRecord);
+    state.records = state.records.map(r =>
+      String(r.id) === String(savedRecord.id)
+        ? savedRecord
+        : r
+    );
 
-        state.records = state.records.map(r =>
-          String(r.id) === String(savedRecord.id)
-            ? savedRecord
-            : r
-        );
+    toast('Record updated');
 
-        toast('Record updated');
+  } else {
 
-      } else {
+    console.log('CREATE MODE');
 
-        savedRecord = await api.create(payload);
+    savedRecord = await api.create(payload);
 
-        state.records.push(savedRecord);
+    state.records.push(savedRecord);
 
-        toast('Audit submitted');
-      }
+    toast('Audit submitted');
+  }
 
       state.editingRecord = null;
 
