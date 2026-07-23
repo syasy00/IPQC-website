@@ -793,13 +793,12 @@ function auditFormFieldsHtml(r) {
     r.icarNum || 'N/A'
   )}
 
-  ${formSelect(
-    'icarStatus',
-    'ICAR Status',
-    r.icarStatus || 'Locked',
-    ['Locked', 'Unlocked']
-  )}
-
+${formSelect(
+  'icarStatus',
+  'ICAR Status',
+  r.icarStatus || 'Locked',
+  ['Locked', 'Submitted']
+)}
 </div>
 
       ${formTextarea('remark', 'Remark', r.remark, 4)}
@@ -853,21 +852,7 @@ function renderAddAuditForm() {
 
         ${auditFormFieldsHtml(r)}
 
-       <div class="mt-6 flex gap-3">
-
-  ${
-    !isEdit
-      ? `
-        <button
-          type="button"
-          id="lockBtn"
-          class="px-6 py-3 bg-slate-500 hover:bg-slate-600 text-white rounded-xl font-bold"
-        >
-          Lock
-        </button>
-      `
-      : ''
-  }
+<div class="mt-6 flex gap-3">
 
   <button
     type="submit"
@@ -1234,52 +1219,7 @@ function bindEvents() {
 
   // form submit
   const form = document.getElementById('auditForm');
-  const lockBtn = document.getElementById('lockBtn');
-
-if (lockBtn && form) {
-
-  lockBtn.addEventListener('click', async () => {
-
-    const fd = new FormData(form);
-    const payload = Object.fromEntries(fd.entries());
-
-    payload.groupFinding =
-      CATEGORY_GROUP_MAPPING[payload.category] || '';
-
-    payload.ww =
-      calculateWW(payload.auditDate);
-
-    payload.icarStatus = 'Locked';
-
-    if (!payload.mqeEngineer) {
-      payload.mqeEngineer =
-        PLATFORM_MQE_MAPPING[payload.platform] || '';
-    }
-
-    try {
-
-      const savedRecord =
-        await api.create(payload);
-
-      state.records.push(savedRecord);
-
-      toast('Audit locked');
-
-      state.view = 'ipqc';
-
-      render();
-
-    } catch (err) {
-
-      console.error(err);
-
-      toast(err.message, true);
-    }
-
-  });
-
-}
-
+ 
 if (form) {
   form.addEventListener('submit', async (e) => {
 
