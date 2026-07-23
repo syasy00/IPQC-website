@@ -474,21 +474,24 @@ recs.forEach(r => {
   if (byStatus[r.icarStatus] !== undefined)
     byStatus[r.icarStatus]++;
 });
-  const statusCtx = document.getElementById('chartStatus');
-  if (statusCtx) {
-    charts.status = new Chart(statusCtx, {
-      type: 'doughnut',
-     data: {
-  labels: Object.keys(byStatus),
-  datasets: [{
-    data: Object.values(byStatus),
-    backgroundColor: [
-      '#f59e0b', // Locked
-      '#10b981'  // Submitted
-    ]
-  }]
+
+   const statusCtx = document.getElementById('chartStatus');
+
+if (statusCtx) {
+  charts.status = new Chart(statusCtx, {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(byStatus),
+      datasets: [{
+        data: Object.values(byStatus),
+        backgroundColor: [
+          '#f59e0b',
+          '#10b981'
+        ]
+      }]
+    }
+  });
 }
-  }
 
   // trend by WW
   const byWW = {};
