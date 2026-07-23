@@ -785,7 +785,23 @@ function auditFormFieldsHtml(r) {
     </div>
 
     <div class="grid lg:grid-cols-2 md:grid-cols-2 grid-cols-1 gap-5 mt-4">
-      ${formInput('icarNum', 'ICAR#', r.icarNum || 'N/A')}
+<div class="grid grid-cols-2 gap-5">
+
+  ${formInput(
+    'icarNum',
+    'ICAR#',
+    r.icarNum || 'N/A'
+  )}
+
+  ${formSelect(
+    'icarStatus',
+    'ICAR Status',
+    r.icarStatus || 'Locked',
+    ['Locked', 'Unlocked']
+  )}
+
+</div>
+
       ${formTextarea('remark', 'Remark', r.remark, 4)}
     </div>
 
@@ -1279,17 +1295,8 @@ payload.ww =
   calculateWW(payload.auditDate);
 
 // determine ICAR status
-if (
-  payload.icarNum &&
-  payload.icarNum.trim() !== '' &&
-  payload.icarNum !== 'N/A'
-) {
-  payload.icarStatus = 'Submitted';
-} else {
-  payload.icarStatus =
-    state.editingRecord?.icarStatus || 'Locked';
-}
-
+payload.icarStatus =
+  payload.icarStatus || 'Locked';
     // IMPORTANT:
     // Preserve ID and No during edit
     if (state.editingRecord) {
