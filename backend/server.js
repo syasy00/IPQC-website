@@ -45,7 +45,8 @@ const COLUMNS = [
   { header: 'Picture URL', key: 'picture', width: 30 },
   { header: 'Remark', key: 'remark', width: 30 },
   { header: 'ICAR No.', key: 'icarNum', width: 16 },
-  { header: 'MQE Engineer', key: 'mqeEngineer', width: 16 },
+{ header: 'ICAR Status', key: 'icarStatus', width: 16 },
+{ header: 'MQE Engineer', key: 'mqeEngineer', width: 16 },
 ];
 
 const PLATFORM_MQE_MAPPING = { Apex: 'Siti Naimah', PDX: 'Larry', Navigator: 'Farid' };
@@ -185,9 +186,10 @@ masterSheet.addRow([
   cellText(row.getCell(11)),          // Finding Details
 
   '',                                 // Picture URL
-  cellText(row.getCell(13)),          // Remark
-  cellText(row.getCell(14)),          // ICAR
-  ''                                  // MQE Engineer
+cellText(row.getCell(13)), // Remark
+cellText(row.getCell(14)), // ICAR
+'Submitted',              // ICAR Status
+''                        // MQE Engineer                           
 ]);
 
         
@@ -238,27 +240,26 @@ async function appendRecord(record) {
     throw new Error(`Worksheet "${SHEET_NAME}" not found`);
   }
   console.log("Before Add:", sheet.rowCount);
-  sheet.addRow([
-    record.id,
-    record.no,
-    record.auditDate,
-    record.ww,
-    record.shift,
-    record.auditors,
-    record.personOnJob,
-    record.department,
-    record.platform,
-    record.areaStation,
-    record.groupFinding,
-    record.category,
-    record.detailsFindings,
-    record.picture,
-    record.remark,
-    record.status,
-    record.icarNum,
-    record.actionTaken,
-    record.mqeEngineer
-  ]);
+sheet.addRow([
+  record.id,
+  record.no,
+  record.auditDate,
+  record.ww,
+  record.shift,
+  record.auditors,
+  record.personOnJob,
+  record.department,
+  record.platform,
+  record.areaStation,
+  record.groupFinding,
+  record.category,
+  record.detailsFindings,
+  record.picture,
+  record.remark,
+  record.icarNum,
+  record.icarStatus,
+  record.mqeEngineer
+]);
 
   console.log("After Add:", sheet.rowCount);
   await workbook.xlsx.writeFile(DATA_FILE);
@@ -411,8 +412,8 @@ app.post('/api/records', async (req, res) => {
       detailsFindings: body.detailsFindings || '',
       picture: body.picture || '',
       remark: body.remark || '',
-      status: 'Open',
       icarNum: body.icarNum || '',
+icarStatus: body.icarStatus || 'Locked',
       mqeEngineer:
         body.mqeEngineer ||
         PLATFORM_MQE_MAPPING[body.platform] ||
