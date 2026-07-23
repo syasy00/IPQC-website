@@ -457,52 +457,110 @@ function statCard(label, value, icon, accent = 'slate') {
 let charts = {};
 function drawCharts() {
   Object.values(charts).forEach(c => c && c.destroy());
+
   const recs = state.records;
 
-  // by department
+  // Department
   const byDept = {};
-  recs.forEach(r => { byDept[r.department || 'Unspecified'] = (byDept[r.department || 'Unspecified'] || 0) + 1; });
+  recs.forEach(r => {
+    byDept[r.department || 'Unspecified'] =
+      (byDept[r.department || 'Unspecified'] || 0) + 1;
+  });
 
+  const deptCtx = document.getElementById('chartDept');
 
-  // status
-const byStatus = {
-  Locked: 0,
-  Submitted: 0
-};
+  if (deptCtx) {
+    charts.department = new Chart(deptCtx, {
+      type: 'bar',
+      data: {
+        labels: Object.keys(byDept),
+        datasets: [{
+          data: Object.values(byDept),
+          backgroundColor: '#F15D22'
+        }]
+      },
+      options: {
+        plugins: {
+          legend: {
+            display: false
+          }
+        }
+      }
+    });
+  }
 
-recs.forEach(r => {
-  if (byStatus[r.icarStatus] !== undefined)
-    byStatus[r.icarStatus]++;
-});
+  // Status
+  const byStatus = {
+    Locked: 0,
+    Submitted: 0
+  };
 
-   const statusCtx = document.getElementById('chartStatus');
-
-if (statusCtx) {
-  charts.status = new Chart(statusCtx, {
-    type: 'doughnut',
-    data: {
-      labels: Object.keys(byStatus),
-      datasets: [{
-        data: Object.values(byStatus),
-        backgroundColor: [
-          '#f59e0b',
-          '#10b981'
-        ]
-      }]
+  recs.forEach(r => {
+    if (byStatus[r.icarStatus] !== undefined) {
+      byStatus[r.icarStatus]++;
     }
   });
-}
 
-  // trend by WW
+  const statusCtx = document.getElementById('chartStatus');
+
+  if (statusCtx) {
+    charts.status = new Chart(statusCtx, {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(byStatus),
+        datasets: [{
+          data: Object.values(byStatus),
+          backgroundColor: [
+            '#f59e0b',
+            '#10b981'
+          ]
+        }]
+      }
+    });
+  }
+
+  // Trend by WW
   const byWW = {};
-  recs.forEach(r => { byWW[r.ww || '?'] = (byWW[r.ww || '?'] || 0) + 1; });
-  const wwLabels = Object.keys(byWW).sort((a, b) => Number(a) - Number(b));
+
+  recs.forEach(r => {
+    byWW[r.ww || '?'] =
+      (byWW[r.ww || '?'] || 0) + 1;
+  });
+
+  const wwLabels = Object.keys(byWW)
+    .sort((a, b) => Number(a) - Number(b));
+
   const trendCtx = document.getElementById('chartTrend');
+
   if (trendCtx) {
     charts.trend = new Chart(trendCtx, {
       type: 'line',
-      data: { labels: wwLabels.map(w => `WW${w}`), datasets: [{ label: 'Findings', data: wwLabels.map(w => byWW[w]), borderColor: '#F15D22', backgroundColor: 'rgba(241,93,34,0.1)', fill: true, tension: 0.3 }] },
-      options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } },
+      data: {
+        labels: wwLabels.map(w => `WW${w}`),
+        datasets: [{
+          label: 'Findings',
+          data: wwLabels.map(w => byWW[w]),
+          borderColor: '#F15D22',
+          backgroundColor: 'rgba(241,93,34,0.1)',
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: {
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              precision: 0
+            }
+          }
+        }
+      }
     });
   }
 }
