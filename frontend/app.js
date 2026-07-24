@@ -270,16 +270,24 @@ async function loadRecords() {
 // Root render
 function render() {
   const app = document.getElementById('app');
-  app.innerHTML = `
-    ${renderSidebar()}
-    <div class="flex-1 flex flex-col overflow-hidden">
-      ${renderHeader()}
-      <main class="flex-1 overflow-y-auto p-6 bg-bg-main">
-        ${state.loading ? renderLoading() : state.error ? renderError() : renderCurrentView()}
-      </main>
-    </div>
-    ${state.previewImage ? renderImageLightbox() : ''}
-  `;
+app.innerHTML = `
+  ${renderSidebar()}
+  <div class="flex-1 flex flex-col overflow-hidden">
+    ${renderHeader()}
+    <main class="flex-1 overflow-y-auto p-6 bg-bg-main">
+      ${
+        state.loading
+          ? renderLoading()
+          : state.error
+          ? renderError()
+          : renderCurrentView()
+      }
+    </main>
+  </div>
+
+  ${state.previewImage ? renderImageLightbox() : ''}
+  ${state.selectedRecord ? renderDetailsModal() : ''}
+`;
   icons();
   bindEvents();
   if (state.view === 'dashboard' && !state.loading && !state.error) drawCharts();
@@ -1181,6 +1189,51 @@ function renderImportPage() {
   `;
 }
 
+function renderDetailsModal() {
+  const r = state.selectedRecord;
+  if (!r) return '';
+
+  return `
+  <div class="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-5xl">
+
+      <div class="flex justify-between mb-6">
+        <h2 class="text-xl font-bold">Finding Details</h2>
+
+        <button data-close-details
+          class="text-slate-500 text-2xl">
+          ×
+        </button>
+      </div>
+
+      <div class="grid grid-cols-3 gap-6">
+
+        <div>
+          <div><b>Auditor:</b> ${esc(r.auditors)}</div>
+          <div><b>PIC:</b> ${esc(r.personOnJob)}</div>
+          <div><b>Platform:</b> ${esc(r.platform)}</div>
+          <div><b>Area:</b> ${esc(r.areaStation)}</div>
+          <div><b>Department:</b> ${esc(r.department)}</div>
+          <div><b>Category:</b> ${esc(r.category)}</div>
+          <div><b>ICAR:</b> ${esc(r.icarNum)}</div>
+        </div>
+
+        <div class="col-span-2">
+          ${
+            r.picture
+              ? `${esc(r.picture)} class="w-full rounded-xl border" />`
+              : `<div class="text-slate-400">
+                   No Image Provided
+                 </div>`
+          }
+        </div>
+
+      </div>
+    </div>
+  </div>
+  `;
+}
+
 // Settings
 function renderSettings() {
   return `
@@ -1220,7 +1273,7 @@ function bindEvents() {
     });
   });
 
- document
+document
   .querySelectorAll('[data-view]')
   .forEach(btn => {
 
@@ -1236,30 +1289,30 @@ function bindEvents() {
 
       if (!record) return;
 
-      alert(`
-         Date: ${record.auditDate}
-         WW: ${record.ww}
-         Shift: ${record.shift}
+      state.selectedRecord = record;
 
-         PIC: ${record.personOnJob}
-         Department: ${record.department}
-         Platform: ${record.platform}
-
-         Area: ${record.areaStation}
-         Group: ${record.groupFinding}
-         Category: ${record.category}
-
-         Finding:
-            ${record.detailsFindings}
-
-         ICAR:
-            ${record.icarNum}
-      `);
+      render();
 
     });
 
   });
+   const closeDetails =
+  document.querySelector('[data-close-details]');
 
+if (closeDetails) {
+
+  closeDetails.addEventListener(
+    'click',
+    () => {
+
+      state.selectedRecord = null;
+
+      render();
+
+    }
+  );
+
+}
   const categoryField = document.querySelector('select[name="category"]');
   const groupField = document.querySelector('input[name="groupFinding"]');
   if (categoryField && groupField) {
