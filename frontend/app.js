@@ -155,9 +155,10 @@ const state = {
   loading: true,
   error: null,
   filters: { search: '', department: '', category: '', status: '' },
-  editingRecord: null, // record object when editing, null when adding
+  editingRecord: null,
   previewImage: null,
-  highlightId: null, // id of a just-added/edited record, briefly flashed in the table
+  selectedRecord: null,
+  highlightId: null,
 };
 
 // Utilities 
@@ -658,48 +659,118 @@ function renderTable(records, { showActions = true } = {}) {
   return `
   <div class="bg-white rounded-xl border border-border-subtle shadow-sm overflow-auto max-h-[65vh]">
     <table class="w-full text-[11px]">
-      <thead>
-        <tr class="border-b border-border-subtle text-text-muted uppercase text-[9px] font-black tracking-widest bg-slate-50/80 sticky top-0">
-          <th class="text-left px-3 py-3">No</th>
-          <th class="text-left px-3 py-3">Date</th>
-          <th class="text-left px-3 py-3">WW</th>
-          <th class="text-left px-3 py-3">Shift</th>
-          <th class="text-left px-3 py-3">Auditor</th>
-          <th class="text-left px-3 py-3">Department</th>
-          <th class="text-left px-3 py-3">Platform</th>
-          <th class="text-left px-3 py-3">Findings</th>
-          <th class="text-left px-3 py-3">ICAR</th>
-          <th class="text-left px-3 py-3">ICAR Status</th>
-          <th class="text-left px-3 py-3">Photo</th>
-          ${showActions ? '<th class="text-left px-3 py-3">Actions</th>' : ''}
-        </tr>
-      </thead>
+     <thead>
+  <tr class="border-b border-border-subtle text-text-muted uppercase text-[9px] font-black tracking-widest bg-slate-50/80 sticky top-0">
+
+    <th class="text-left px-3 py-3">No</th>
+
+    <th class="text-left px-3 py-3">Date</th>
+
+    <th class="text-left px-3 py-3">WW</th>
+
+    <th class="text-left px-3 py-3">Shift</th>
+
+    <th class="text-left px-3 py-3">PIC Finding</th>
+
+    <th class="text-left px-3 py-3">Department</th>
+
+    <th class="text-left px-3 py-3">Platform</th>
+
+    <th class="text-left px-3 py-3">Area / Station</th>
+
+    <th class="text-left px-3 py-3">Group Finding</th>
+
+    <th class="text-left px-3 py-3">Category</th>
+
+    <th class="text-left px-3 py-3">Finding Details</th>
+
+    <th class="text-left px-3 py-3">ICAR #</th>
+
+    <th class="text-left px-3 py-3">Photo</th>
+
+    <th class="text-left px-3 py-3">View</th>
+
+    ${
+      showActions
+        ? '<th class="text-left px-3 py-3">Actions</th>'
+        : ''
+    }
+
+  </tr>
+</thead>
       <tbody>
         ${records.map(r => `
           <tr class="border-b border-border-subtle/60 odd:bg-white even:bg-slate-50/40 hover:bg-orange-50/50 transition-colors ${String(r.id) === String(state.highlightId) ? 'row-flash' : ''}">
-            <td class="px-3 py-2 font-bold">${esc(r.no)}</td>
-            <td class="px-3 py-2">${esc(r.auditDate)}</td>
-            <td class="px-3 py-2">${esc(r.ww)}</td>
-            <td class="px-3 py-2">${esc(r.shift)}</td>
-            <td class="px-3 py-2 font-semibold">${esc(r.auditors)}</td>
-            <td class="px-3 py-2">${esc(r.department)}</td>
-            <td class="px-3 py-2">${esc(r.platform)}</td>
-            <td class="px-3 py-2 max-w-[240px] truncate" title="${esc(r.detailsFindings)}">${esc(r.detailsFindings)}</td>
+         <td class="px-3 py-2 font-bold">
+  ${esc(r.no)}
+</td>
+
+<td class="px-3 py-2">
+  ${esc(r.auditDate)}
+</td>
+
+<td class="px-3 py-2">
+  ${esc(r.ww)}
+</td>
+
+<td class="px-3 py-2">
+  ${esc(r.shift)}
+</td>
+
+<td class="px-3 py-2">
+  ${esc(r.personOnJob)}
+</td>
+
+<td class="px-3 py-2">
+  ${esc(r.department)}
+</td>
+
+<td class="px-3 py-2">
+  ${esc(r.platform)}
+</td>
+
+<td class="px-3 py-2">
+  ${esc(r.areaStation)}
+</td>
+
+<td class="px-3 py-2">
+  ${esc(r.groupFinding)}
+</td>
+
+<td class="px-3 py-2">
+  ${esc(r.category)}
+</td>
+
+<td
+  class="px-3 py-2 max-w-[220px] truncate"
+  title="${esc(r.detailsFindings)}"
+>
+  ${esc(r.detailsFindings)}
+</td>
 
 <td class="px-3 py-2">
   ${esc(r.icarNum)}
 </td>
 
 <td class="px-3 py-2">
-  ${esc(r.icarStatus || 'Locked')}
+  ${
+    r.picture
+      ? `
+      ${esc(r.picture)}(r.picture)}"
+        class="w-14 h-14 object-cover rounded-lg border cursor-pointer"
+      />
+      `
+      : '—'
+  }
 </td>
 
 <td class="px-3 py-2">
-  ${r.picture
-    ? `<button data-preview="${esc(r.picture)}" class="text-brand-orange">
-         <i data-lucide="${ICONS.image}"></i>
-       </button>`
-    : '—'}
+  <button
+    data-view="${esc(r.id)}"
+    class="px-3 py-1 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-[10px] font-bold"
+  >
+    View
+  </button>
 </td>
             ${showActions ? `
             <td class="px-3 py-2">
@@ -1147,6 +1218,46 @@ function bindEvents() {
       if (state.view === 'add-audit') state.editingRecord = null;
       render();
     });
+  });
+
+ document
+  .querySelectorAll('[data-view]')
+  .forEach(btn => {
+
+    btn.addEventListener('click', () => {
+
+      const id =
+        btn.getAttribute('data-view');
+
+      const record =
+        state.records.find(
+          r => String(r.id) === String(id)
+        );
+
+      if (!record) return;
+
+      alert(`
+         Date: ${record.auditDate}
+         WW: ${record.ww}
+         Shift: ${record.shift}
+
+         PIC: ${record.personOnJob}
+         Department: ${record.department}
+         Platform: ${record.platform}
+
+         Area: ${record.areaStation}
+         Group: ${record.groupFinding}
+         Category: ${record.category}
+
+         Finding:
+            ${record.detailsFindings}
+
+         ICAR:
+            ${record.icarNum}
+      `);
+
+    });
+
   });
 
   const categoryField = document.querySelector('select[name="category"]');
