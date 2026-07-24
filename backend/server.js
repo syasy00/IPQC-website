@@ -134,85 +134,154 @@ app.post(
   async (req, res) => {
     try {
 
-      const importedBook = new ExcelJS.Workbook();
-      await importedBook.xlsx.readFile(req.file.path);
+      const importedBook =
+        new ExcelJS.Workbook();
 
-      const sourceSheet = importedBook.worksheets[0];
-const images = sourceSheet.getImages();
+      await importedBook.xlsx.readFile(
+        req.file.path
+      );
 
-console.log('TOTAL IMAGES:', images.length);
+      const sourceSheet =
+        importedBook.worksheets[0];
 
-images.forEach((img, index) => {
-  console.log('IMAGE', index + 1, {
-    imageId: img.imageId,
-    range: img.range
-  });
-});
+      const masterBook =
+        new ExcelJS.Workbook();
 
-      const masterBook = new ExcelJS.Workbook();
-      await masterBook.xlsx.readFile(DATA_FILE);
+      await masterBook.xlsx.readFile(
+        DATA_FILE
+      );
 
       const masterSheet =
-        masterBook.getWorksheet(SHEET_NAME);
-      const startNo = masterSheet.rowCount;
+        masterBook.getWorksheet(
+          SHEET_NAME
+        );
+
+      const startNo =
+        masterSheet.rowCount;
+
+      const imageMap = {};
+
+      const images =
+        sourceSheet.getImages();
+
+      for (const img of images) {
+
+        try {
+
+          const image =
+            importedBook.getImage(
+              img.imageId
+            );
+
+          const rowNo =
+            Math.floor(
+              img.range.tl.row
+            ) + 1;
+
+          const filename =
+            `import-${Date.now()}-${img.imageId}.png`;
+
+          const savePath =
+            path.join(
+              UPLOADS_DIR,
+              filename
+            );
+
+          if (image.buffer) {
+
+            fs.writeFileSync(
+              savePath,
+              image.buffer
+            );
+
+            imageMap[rowNo] =
+              `${req.protocol}://${req.get('host')}/uploads/${filename}`;
+
+          }
+
+        } catch (err) {
+
+          console.error(
+            'IMAGE IMPORT ERROR',
+            err
+          );
+
+        }
+
+      }
 
       let count = 0;
-      
 
-      sourceSheet.eachRow((row, rowNumber) => {
+      sourceSheet.eachRow(
+        (row, rowNumber) => {
 
-        if (rowNumber === 1) return;
+          if (rowNumber === 1)
+            return;
 
-        if (!cellText(row.getCell(1))) return;
+          if (
+            !cellText(
+              row.getCell(1)
+            )
+          ) {
+            return;
+          }
 
-        count++;
+          count++;
 
+          masterSheet.addRow([
+            Date.now() + count,
+            startNo + count,
 
+            cellText(row.getCell(1)), // Date
+            cellText(row.getCell(2)), // WW
+            cellText(row.getCell(3)), // Shift
+            cellText(row.getCell(4)), // Auditor
+            cellText(row.getCell(5)), // PIC
+            cellText(row.getCell(6)), // Department
+            cellText(row.getCell(7)), // Platform
+            cellText(row.getCell(8)), // Area Station
+            cellText(row.getCell(9)), // Group Finding
+            cellText(row.getCell(10)), // Category
+            cellText(row.getCell(11)), // Finding Details
 
-masterSheet.addRow([
-  Date.now() + count,                 // ID
-  startNo + count,                 // No
+            imageMap[rowNumber] || '',
 
-  cellText(row.getCell(1)),           // Date
-  cellText(row.getCell(2)),           // WW
-  cellText(row.getCell(3)),           // Shift
-  cellText(row.getCell(4)),           // Auditor
-  cellText(row.getCell(5)),           // PIC Finding
-  cellText(row.getCell(6)),           // Department
-  cellText(row.getCell(7)),           // Platform
-  cellText(row.getCell(8)),           // Area / Station
-  cellText(row.getCell(9)),           // Group Finding
-  cellText(row.getCell(10)),          // Category
-  cellText(row.getCell(11)),          // Finding Details
+            cellText(row.getCell(13)), // Remark
 
-  '',                                 // Picture URL
-cellText(row.getCell(13)), // Remark
-cellText(row.getCell(14)), // ICAR
-'Submitted',              // ICAR Status
-''                        // MQE Engineer                           
-]);
+            cellText(row.getCell(15)), // ICAR #
 
-        
-      });
+            cellText(row.getCell(14))
+              || 'Locked',             // Status
 
-      await masterBook.xlsx.writeFile(DATA_FILE);
+            ''                         // MQE
+          ]);
+
+        }
+      );
+
+      await masterBook.xlsx.writeFile(
+        DATA_FILE
+      );
 
       res.json({
         success: true,
-        imported: count
+        imported: count,
+        images: Object.keys(imageMap)
+          .length
       });
 
     } catch (err) {
+
       console.error(err);
 
       res.status(500).json({
         error: 'Import failed',
         details: err.message
       });
+
     }
   }
 );
-
 
 
 async function readAllRecords() {
